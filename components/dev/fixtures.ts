@@ -156,5 +156,5 @@ export const FIXTURE_CONTENT: SiteContent = {
     socials: {},
     resumeUrl: null,
   },
-  experience: [],
+  education: [],
 };

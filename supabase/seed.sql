@@ -15,23 +15,57 @@ values
   ('gaas-product',       'GaaS product',       false, false, true,  false, 5)
 on conflict (slug) do nothing;
 
--- Descriptions and stacks are left empty for the admin to fill in.
-insert into public.categories (slug, name, number, color, sort)
+-- Descriptions and stacks are drafted from Rafay's CV (editable in the admin).
+insert into public.categories (slug, name, number, description, stack, color, sort)
 values
-  ('ai-automations',        'AI Automations',                  '01', '#B600A8', 1),
-  ('agentic-ai',            'Agentic AI',                      '02', '#7621B0', 2),
-  ('websites-client-work',  'Websites & Client Work',          '03', '#BE4C00', 3),
-  ('computer-vision',       'Computer Vision',                 '04', '#2F80ED', 4),
-  ('ml-data-science',       'Machine Learning & Data Science', '05', '#27AE60', 5),
-  ('3d-webgl',              '3D & WebGL',                      '06', '#D7E2EA', 6)
+  ('ai-automations', 'AI Automations', '01',
+   'n8n workflows that connect your apps, automate repetitive work and bring AI into day-to-day operations.',
+   array['n8n', 'AI integrations', 'REST APIs'], '#B600A8', 1),
+  ('agentic-ai', 'Agentic AI', '02',
+   'AI agents built with LangChain that answer questions, use tools and carry out multi-step tasks.',
+   array['LangChain', 'Python', 'Node.js'], '#7621B0', 2),
+  ('websites-client-work', 'Websites & Client Work', '03',
+   'Websites and full-stack applications, from interface and API to database, built around what the business actually needs.',
+   array['React', 'Node.js', 'Django', 'SQL'], '#BE4C00', 3),
+  ('computer-vision', 'Computer Vision', '04',
+   'Vision pipelines that are trained, integrated and evaluated against held-out data.',
+   array['Python'], '#2F80ED', 4),
+  ('ml-data-science', 'Machine Learning & Data Science', '05',
+   'Model training, data preprocessing and evaluation, reported with honest held-out metrics.',
+   array['Python', 'SQL', 'Business analytics'], '#27AE60', 5),
+  ('3d-webgl', '3D & WebGL', '06',
+   'Interactive 3D web experiences and animations with Three.js and WebGL.',
+   array['Three.js', 'WebGL', 'React'], '#D7E2EA', 6)
 on conflict (slug) do nothing;
 
 insert into public.site_content (key, value)
-values (
-  'hero_tagline',
-  to_jsonb('an AI engineer building automations, AI products and websites that work'::text)
-)
+values
+  ('hero_tagline',
+   to_jsonb('an AI engineer building automations, AI products and websites that work'::text)),
+  -- No employer names, on purpose.
+  ('about_text',
+   to_jsonb('I''m a Computer Science graduate (CGPA 3.9) and a full-stack developer and AI engineer. I build AI agents, n8n automations, full-stack web apps and interactive 3D websites. I''ve built business management software and worked on a banking risk-management system, and today I run my own technology agency and freelance for clients. My approach is business-first: understand the problem, choose the right technology, and ship something that is easy to maintain.'::text)),
+  ('skills', '[
+    {"group": "AI & Automation", "items": ["Agentic AI", "LangChain", "AI agents", "n8n workflow automation", "AI integrations"]},
+    {"group": "Frontend", "items": ["JavaScript", "React", "HTML", "CSS", "Three.js", "WebGL", "Responsive web design", "UX"]},
+    {"group": "Backend & APIs", "items": ["Python", "Node.js", "Django", "REST APIs", "Integrations"]},
+    {"group": "Databases", "items": ["SQL", "Database design", "Data modelling"]},
+    {"group": "Engineering", "items": ["Full-stack development", "SaaS development", "Software testing", "Security fundamentals", "Debugging"]},
+    {"group": "Additional", "items": ["Business analytics", "Product thinking", "Technical planning", "Client communication"]}
+  ]'::jsonb),
+  ('socials', '{"linkedin": "https://www.linkedin.com/in/abdul-rafay-8438b9430/"}'::jsonb)
 on conflict (key) do nothing;
+
+-- Education (from the CV). photo_url / certificate_url are added in the admin.
+insert into public.education
+  (qualification, institution, start_label, end_label, grade, sort)
+select v.qualification, v.institution, v.start_label, v.end_label, v.grade, v.sort
+from (values
+  ('BSc Computer Science',            'University of Hertfordshire', 'Feb 2023', 'Jan 2026', 'CGPA 3.9', 1),
+  ('Intermediate (Pre-Engineering)',  'DA Degree College',           'Feb 2020', 'Feb 2023', 'Grade A',  2),
+  ('O Levels',                        'Beaconhouse',                 'Mar 2006', 'Jun 2019', 'Grade A',  3)
+) as v (qualification, institution, start_label, end_label, grade, sort)
+where not exists (select 1 from public.education);
 
 -- ── Draft 1: Sentinel ───────────────────────────────────────────────
 insert into public.projects

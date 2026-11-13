@@ -99,6 +99,33 @@ describe("seed", () => {
     expect(
       await count(db, `select count(*) n from public.trained_vs_integrated`),
     ).toBe(3);
+    expect(await count(db, `select count(*) n from public.education`)).toBe(3);
+  });
+
+  it("seeds CV content without naming any employer", async () => {
+    const about = await db.query<{ v: string }>(
+      `select value #>> '{}' as v from public.site_content where key = 'about_text'`,
+    );
+    expect(about.rows[0].v).toMatch(/Computer Science graduate/);
+    const everything = JSON.stringify(
+      (await db.query(`select * from public.site_content`)).rows,
+    );
+    for (const employer of ["Meezan", "Arfa", "Vertixes"]) {
+      expect(everything).not.toContain(employer);
+    }
+    const edu = await db.query<{ qualification: string; grade: string }>(
+      `select qualification, grade from public.education order by sort`,
+    );
+    expect(edu.rows[0]).toEqual({
+      qualification: "BSc Computer Science",
+      grade: "CGPA 3.9",
+    });
+  });
+
+  it("the public can read education", async () => {
+    await asAnon(db, async (d) => {
+      expect(await count(d, `select count(*) n from public.education`)).toBe(3);
+    });
   });
 });
 

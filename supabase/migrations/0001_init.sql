@@ -3,7 +3,7 @@
 --
 -- Access model
 --   anon           read-only: published projects (+ their child rows),
---                  categories, types, site content, experience.
+--                  categories, types, site content, education.
 --                  Never the raw client_name, never private traction rows.
 --   authenticated  full access ONLY when the JWT email is the admin email
 --                  (private.is_admin()); any other signed-in user gets nothing.
@@ -258,15 +258,22 @@ create table public.site_content (
   updated_at  timestamptz not null default now()
 );
 
-create table public.experience (
-  id           uuid primary key default gen_random_uuid(),
-  kind         text not null check (kind in ('work', 'education')),
-  org          text not null,
-  role         text not null,
-  start_label  text not null default '',
-  end_label    text not null default '',
-  description  text not null default '',
-  sort         integer not null default 0
+-- Education (there is deliberately no work-history table: the site does not
+-- list employers). photo_url / certificate_url: a photo of Rafay and of the
+-- degree, shown in the Education section.
+create table public.education (
+  id               uuid primary key default gen_random_uuid(),
+  qualification    text not null,
+  institution      text not null,
+  start_label      text not null default '',
+  end_label        text not null default '',
+  grade            text not null default '',
+  description      text not null default '',
+  photo_url        text,
+  photo_alt        text not null default '',
+  certificate_url  text,
+  certificate_alt  text not null default '',
+  sort             integer not null default 0
 );
 
 -- ── Server-only tables (no public access at all) ────────────────────
@@ -332,7 +339,7 @@ begin
   foreach t in array array[
     'categories', 'project_types', 'projects', 'project_categories',
     'project_metrics', 'traction_metrics', 'changelog_entries',
-    'trained_vs_integrated', 'project_media', 'site_content', 'experience',
+    'trained_vs_integrated', 'project_media', 'site_content', 'education',
     'messages', 'events', 'chat_logs', 'match_results', 'rate_limits'
   ]
   loop
@@ -352,7 +359,7 @@ grant usage on all sequences in schema public to authenticated, service_role;
 -- ── Public (anon) read access ───────────────────────────────────────
 
 grant select on public.categories, public.project_types, public.site_content,
-  public.experience, public.project_categories, public.project_metrics,
+  public.education, public.project_categories, public.project_metrics,
   public.traction_metrics, public.changelog_entries,
   public.trained_vs_integrated, public.project_media
   to anon;
@@ -380,7 +387,7 @@ create policy "public reads project types" on public.project_types
   for select to anon using (true);
 create policy "public reads site content" on public.site_content
   for select to anon using (true);
-create policy "public reads experience" on public.experience
+create policy "public reads education" on public.education
   for select to anon using (true);
 
 create policy "public reads published projects" on public.projects

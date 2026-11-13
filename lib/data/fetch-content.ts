@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   mapCategory,
-  mapExperience,
+  mapEducation,
   mapProject,
   mapProjectType,
   mapSiteSettings,
@@ -99,7 +99,7 @@ export async function fetchContent(
     .order("sort", { ascending: true });
   if (!includeDrafts) projectsQuery = projectsQuery.eq("published", true);
 
-  const [categories, types, projects, site, experience] = await Promise.all([
+  const [categories, types, projects, site, education] = await Promise.all([
     all(client.from("categories").select("*").order("sort"), "categories"),
     all(
       client.from("project_types").select("*").order("sort"),
@@ -107,7 +107,7 @@ export async function fetchContent(
     ),
     all(projectsQuery, "projects"),
     all(client.from("site_content").select("key, value"), "site content"),
-    all(client.from("experience").select("*").order("sort"), "experience"),
+    all(client.from("education").select("*").order("sort"), "education"),
   ]);
 
   const content: SiteContent = {
@@ -115,7 +115,7 @@ export async function fetchContent(
     types: types.map(mapProjectType),
     projects: projects.map(mapProject),
     site: mapSiteSettings(site),
-    experience: experience.map(mapExperience),
+    education: education.map(mapEducation),
   };
 
   if (!includeDrafts) {

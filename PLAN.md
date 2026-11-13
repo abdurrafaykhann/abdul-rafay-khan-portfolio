@@ -4,12 +4,13 @@ Status: **v2 — revised with your changes (1–21). Waiting for your OK to star
 
 ## 0. Ground rules (from your feedback)
 
-- **No placeholders on the public site.** Empty field → hidden. Empty section (no key projects, no marquee media, no experience, no about text…) → the whole section and its nav link are hidden. Placeholders/hints exist only in the admin.
+- **No placeholders on the public site.** Empty field → hidden. Empty section (no key projects, no marquee media, no education entries, no about text…) → the whole section and its nav link are hidden. Placeholders/hints exist only in the admin.
 - **Stop after every milestone** for you to review in the browser. One clean git commit per milestone. Nothing moves on while something is broken.
 - **Deploy to Vercel after M3**, redeploy after every milestone after that.
 - Git: `git init` + GitHub repo in M0; `.gitignore` covers `.env*` (except `.env.example`) in the **first** commit.
 - Admin email: kept only in env `ADMIN_EMAIL` (never hard-coded in code or committed to the repo).
 - Domain: `*.vercel.app` for now. Single page with sections + `/work/[slug]` case studies.
+- **CV content (2026-11-14):** no Experience section and no employer names anywhere on the site or in the AI knowledge base. About, skills, What I do and Education come from the CV. Education shows a photo of me and of my degree.
 
 ## 1. Architecture
 
@@ -47,7 +48,7 @@ portfolio/
 ├─ app/
 │  ├─ (site)/ page.tsx  work/[slug]/{page.tsx,opengraph-image.tsx}  match/[id]/page.tsx
 │  ├─ admin/ login/ projects/ projects/[id]/ key-projects/ categories/ types/
-│  │         site/ marquee/ experience/ insights/ messages/ knowledge/
+│  │         site/ marquee/ education/ insights/ messages/ knowledge/
 │  ├─ api/ ask/ match/ track/ contact/ keepalive/ draft/
 │  ├─ sitemap.ts robots.ts layout.tsx globals.css
 ├─ components/
@@ -121,27 +122,27 @@ Defaults — categories: AI Automations, Agentic AI, Websites & Client Work, Com
 
 **Site, AI and ops**
 
-| Table           | Columns                                                                                                                                                                      |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `site_content`  | key pk, value jsonb — hero_tagline (default "an AI engineer building automations, AI products and websites that work"), about_text, skills, socials, resume_url, resume_text |
-| `experience`    | id, kind (`work`/`education`), org, role, start, end, description, sort                                                                                                      |
-| `kb_chunks`     | id, source_type, source_id, source_url, content, hash, embedding vector(768), HNSW index; RPC `match_chunks(query, k, threshold)`                                            |
-| `chat_logs`     | id, question (PII-scrubbed), answered bool, source_slugs text[], created_at                                                                                                  |
-| `match_results` | id (unguessable), jd_title, company, result jsonb, created_at (JD text not stored)                                                                                           |
-| `events`        | id, type (`view`/`click`), project_id, target, created_at (no IP/UA)                                                                                                         |
-| `messages`      | id, name, email, body, status (`new`/`read`/`archived`), created_at                                                                                                          |
-| `rate_limits`   | key (hashed IP+cookie), bucket, window_start, count                                                                                                                          |
+| Table           | Columns                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `site_content`  | key pk, value jsonb — hero_tagline (default "an AI engineer building automations, AI products and websites that work"), about_text, skills, socials, resume_url, resume_text   |
+| `education`     | id, qualification, institution, start, end, grade, description, photo_url (+alt), certificate_url (+alt), sort. No work-history table: employers are never listed on the site. |
+| `kb_chunks`     | id, source_type, source_id, source_url, content, hash, embedding vector(768), HNSW index; RPC `match_chunks(query, k, threshold)`                                              |
+| `chat_logs`     | id, question (PII-scrubbed), answered bool, source_slugs text[], created_at                                                                                                    |
+| `match_results` | id (unguessable), jd_title, company, result jsonb, created_at (JD text not stored)                                                                                             |
+| `events`        | id, type (`view`/`click`), project_id, target, created_at (no IP/UA)                                                                                                           |
+| `messages`      | id, name, email, body, status (`new`/`read`/`archived`), created_at                                                                                                            |
+| `rate_limits`   | key (hashed IP+cookie), bucket, window_start, count                                                                                                                            |
 
 **Rules enforced in the database (not just the UI)**
 
-- RLS on every table. Anon: `SELECT` only on published projects and their child rows, categories, types, site_content, experience; `traction_metrics` only where `show_public`; `client_name` exposed through a view that returns `null` when `hide_client_name`. No anon writes except via validated API routes (contact, events, rate limits use server-side client).
+- RLS on every table. Anon: `SELECT` only on published projects and their child rows, categories, types, site_content, education; `traction_metrics` only where `show_public`; `client_name` exposed through a view that returns `null` when `hide_client_name`. No anon writes except via validated API routes (contact, events, rate limits use server-side client).
 - All writes require `auth.jwt()->>'email' = admin email` (stored in a private config function).
 - Publish trigger: a project whose type `requires_client_approval` cannot be `published = true` unless `client_approved = true`.
 - Storage: `public` bucket (published media, admin-only write); `private` bucket for raw n8n JSON is never written — only the sanitised file is stored.
 
 ## 4. Pages and components
 
-- `/` — Hero · Marquee · About · What I do · Work · Ask My AI · Experience & Education · Contact/footer. Navbar: name/logo + About · Work · Ask AI · Contact (links hide with their sections).
+- `/` — Hero · Marquee · About · What I do · Work · Ask My AI · Education & Skills · Contact/footer. Navbar: name/logo + About · Work · Ask AI · Contact (links hide with their sections).
 - `/work/[slug]` — case study; sections render only when they have data: pitch, demo video, architecture (pre-rendered SVG), metrics, client block (client or "a client in {industry}", role, testimonial), automation block (trigger, apps, workflow screenshot, dashboards, savings, JSON download), product block ("Try it" button, value prop, stage, pricing, public traction with "as of" dates, features, changelog), trained-vs-integrated table, tech stack, gallery, links, prev/next.
 - `/match/[id]` — shared matcher result.
 - `/admin/*` — protected in middleware + every page/action.
@@ -158,7 +159,7 @@ Defaults — categories: AI Automations, Agentic AI, Websites & Client Work, Com
 | Projects: sticky stacking cards, scale `1-(n-1-i)*0.03`, top `i*28px`, h-[85vh], sticky top-24/md:top-32                                                                | **Key projects** in `key_sort` order; card shows number, **type label** (Client / Personal / …), name, Live Project + GitHub (only if links exist), image grid, highlighted metric + public traction badges                                                         |
 | —                                                                                                                                                                       | **All work** grid: filter bar (All + categories that have published projects), GSAP Flip on filter change, 12 shown then "Load more"; status badge only when `show_status_badge`; grid ↔ galaxy toggle                                                              |
 | ContactButton / LiveProjectButton / FadeIn (0.7s, `cubic-bezier(.25,.1,.25,1)`, once, 50px margin) / Magnet (padding 150, strength 3, 0.3s ease-out / 0.6s ease-in-out) | Rebuilt in GSAP with identical numbers                                                                                                                                                                                                                              |
-| —                                                                                                                                                                       | New sections in the same language: Ask My AI, Experience & Education, Contact/footer                                                                                                                                                                                |
+| —                                                                                                                                                                       | New sections in the same language: Ask My AI, Education & Skills (with a photo of me and of my degree), Contact/footer                                                                                                                                              |
 
 ## 6. Hero 3D pipeline
 
@@ -188,7 +189,7 @@ Defaults — categories: AI Automations, Agentic AI, Websites & Client Work, Com
 - **n8n JSON upload**: server-side sanitiser removes `credentials` blocks, credential IDs, webhook IDs/paths/URLs, and any parameter whose key or value looks like a secret (api key/token/password/secret/bearer/auth header patterns, long high-entropy strings, URLs with keys in the query). You see a **diff of what was removed** and confirm before the sanitised file is stored. Raw upload is never persisted.
 - **Key projects**: separate drag list; warning banner above 6.
 - **Categories** and **Types**: add / rename / reorder / delete; category colour, number, description, stack, show-in-What-I-do; type field-group flags.
-- **Site content**: hero tagline, about text, skills, socials, resume PDF (text extracted for the KB). **Experience & education**. **Marquee** order (drag list of projects with show-in-marquee).
+- **Site content**: hero tagline, about text, skills, socials, resume PDF (text extracted for the KB). **Education** (each entry can have a photo and a degree/certificate image). **Marquee** order (drag list of projects with show-in-marquee).
 - **Knowledge**: chunk counts, last indexed, "Re-index everything".
 - **Insights**: views per project, questions asked, JDs matched (title/company), most-clicked links. **Messages**: read/archive.
 - **Seed** (all **unpublished drafts** for you to review — no other projects):
@@ -236,7 +237,7 @@ Each ends with: something you can open in the browser, passing tests, one git co
 - **Before M3**: Supabase project URL, anon key, service-role key (into `.env.local`, never committed); Vercel account linked to the GitHub repo.
 - **Before M7**: a clear front-facing photo (≥1500 px tall); Python 3.10+ locally or use Colab.
 - **Before M8/M9**: Groq API key, Gemini API key.
-- **Anytime via admin**: about text, skills, links, experience, resume, project media and metrics.
+- **Anytime via admin**: about text, skills, links, education photos, resume, project media and metrics.
 
 ## 13. Risks / notes
 

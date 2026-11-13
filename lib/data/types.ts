@@ -130,20 +130,24 @@ export type Project = {
   media: ProjectMedia[];
 };
 
-export type ExperienceEntry = {
+export type EducationEntry = {
   id: string;
-  kind: "work" | "education";
-  org: string;
-  role: string;
+  qualification: string;
+  institution: string;
   start: string;
   end: string;
+  grade: string;
   description: string;
+  photo: { url: string; alt: string } | null;
+  certificate: { url: string; alt: string } | null;
 };
+
+export type SkillGroup = { group: string; items: string[] };
 
 export type SiteSettings = {
   heroTagline: string | null;
   aboutText: string | null;
-  skills: string[];
+  skills: SkillGroup[];
   socials: { linkedin?: string; github?: string; email?: string };
   resumeUrl: string | null;
 };
@@ -153,7 +157,7 @@ export type SiteContent = {
   types: ProjectType[];
   projects: Project[];
   site: SiteSettings;
-  experience: ExperienceEntry[];
+  education: EducationEntry[];
 };
 
 export const EMPTY_CONTENT: SiteContent = {
@@ -167,5 +171,5 @@ export const EMPTY_CONTENT: SiteContent = {
     socials: {},
     resumeUrl: null,
   },
-  experience: [],
+  education: [],
 };

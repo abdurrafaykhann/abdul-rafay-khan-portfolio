@@ -125,10 +125,18 @@ describe("mapSiteSettings", () => {
       { key: "hero_tagline", value: "my tagline" },
       { key: "about_text", value: "   " },
       { key: "socials", value: { github: "https://github.com/x" } },
+      {
+        key: "skills",
+        value: [
+          { group: "Frontend", items: ["React", 3] },
+          { group: "Empty", items: [] },
+        ],
+      },
     ]);
     expect(s.heroTagline).toBe("my tagline");
     expect(s.aboutText).toBeNull();
     expect(s.socials.github).toBe("https://github.com/x");
+    expect(s.skills).toEqual([{ group: "Frontend", items: ["React"] }]);
   });
 });
 

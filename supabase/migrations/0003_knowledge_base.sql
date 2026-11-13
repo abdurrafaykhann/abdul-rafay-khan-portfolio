@@ -9,7 +9,7 @@ create extension if not exists vector with schema extensions;
 
 create table public.kb_chunks (
   id           uuid primary key default gen_random_uuid(),
-  source_type  text not null,   -- project | category | about | skills | experience | resume
+  source_type  text not null,   -- project | category | about | skills | education | resume
   source_id    text not null,   -- project id, or a fixed key for site content
   source_url   text,            -- page the answer links to
   title        text not null default '',

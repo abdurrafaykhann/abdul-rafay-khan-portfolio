@@ -1,6 +1,7 @@
 import type {
   Category,
-  ExperienceEntry,
+  EducationEntry,
+  SkillGroup,
   Project,
   ProjectLinks,
   ProjectStatus,
@@ -201,16 +202,28 @@ export function mapProject(r: Row): Project {
   };
 }
 
-export function mapExperience(r: Row): ExperienceEntry {
+export function mapEducation(r: Row): EducationEntry {
+  const image = (url: unknown, alt: unknown) => {
+    const src = text(url);
+    return src ? { url: src, alt: str(alt) } : null;
+  };
   return {
     id: str(r.id),
-    kind: r.kind === "education" ? "education" : "work",
-    org: str(r.org),
-    role: str(r.role),
+    qualification: str(r.qualification),
+    institution: str(r.institution),
     start: str(r.start_label),
     end: str(r.end_label),
+    grade: str(r.grade),
     description: str(r.description),
+    photo: image(r.photo_url, r.photo_alt),
+    certificate: image(r.certificate_url, r.certificate_alt),
   };
+}
+
+function mapSkills(v: unknown): SkillGroup[] {
+  return rows(v)
+    .map((g) => ({ group: str(g.group), items: list(g.items) }))
+    .filter((g) => g.group && g.items.length > 0);
 }
 
 /** site_content is a key → JSON value table. */
@@ -222,7 +235,7 @@ export function mapSiteSettings(entries: Row[]): SiteSettings {
   return {
     heroTagline: text(byKey.get("hero_tagline")),
     aboutText: text(byKey.get("about_text")),
-    skills: list(byKey.get("skills")),
+    skills: mapSkills(byKey.get("skills")),
     socials: {
       linkedin: text(socials.linkedin) ?? undefined,
       github: text(socials.github) ?? undefined,
