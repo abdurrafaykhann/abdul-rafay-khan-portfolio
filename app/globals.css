@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Design tokens (from the template spec) */
+@theme inline {
+  --color-ink: #0c0c0c;
+  --color-mist: #d7e2ea;
+  --color-paper: #ffffff;
+  --font-sans: var(--font-kanit), ui-sans-serif, system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: #0c0c0c;
+  color: #d7e2ea;
+  font-family: var(--font-kanit), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Gradient heading text used by hero / section headings */
+.hero-heading {
+  background: linear-gradient(180deg, #646973 0%, #bbccd7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid #d7e2ea;
+  outline-offset: 3px;
+}
