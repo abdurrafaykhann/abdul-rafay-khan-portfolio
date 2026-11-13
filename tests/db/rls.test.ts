@@ -110,9 +110,10 @@ describe("seed", () => {
     const everything = JSON.stringify(
       (await db.query(`select * from public.site_content`)).rows,
     );
-    for (const employer of ["Meezan", "Arfa", "Vertixes"]) {
-      expect(everything).not.toContain(employer);
-    }
+    // generic organisation words that would signal an employer name
+    expect(everything).not.toMatch(
+      /\b(Bank|Ltd|Limited|Company|Global|Inc|LLC)\b/,
+    );
     const edu = await db.query<{ qualification: string; grade: string }>(
       `select qualification, grade from public.education order by sort`,
     );
