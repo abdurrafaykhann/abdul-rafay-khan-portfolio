@@ -1,10 +1,12 @@
 """Prepare the Education section photos for the web.
 
 Usage (from the project root):
-    tools/.venv/Scripts/python tools/education_photos.py PHOTO DEGREE
+    tools/.venv/Scripts/python tools/education_photos.py PHOTO DEGREE [top|bottom]
 
     PHOTO   graduation photo (any format Pillow reads)
     DEGREE  degree certificate image
+    top|bottom  which edge of the photo the 4:5 crop keeps (default: top;
+            use bottom for full-length shots so feet are not cut off)
 
 Writes:
     public/education/graduation.webp   4:5 portrait crop, max 1000 px tall
@@ -32,14 +34,16 @@ BLUR_BOXES = [
 ]
 
 
-def portrait(path: str) -> None:
+def portrait(path: str, anchor: str = "top") -> None:
     img = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     w, h = img.size
-    # centre a 4:5 crop horizontally, keep the top (faces sit high in frame)
+    # centre a 4:5 crop horizontally; keep the top or bottom edge
     target_w = min(w, round(h * 4 / 5))
     target_h = round(target_w * 5 / 4)
     left = (w - target_w) // 2
-    img = img.crop((left, 0, left + target_w, min(h, target_h)))
+    target_h = min(h, target_h)
+    top = h - target_h if anchor == "bottom" else 0
+    img = img.crop((left, top, left + target_w, top + target_h))
     if img.height > 1000:
         img = img.resize((round(img.width * 1000 / img.height), 1000), Image.LANCZOS)
     img.save(OUT / "graduation.webp", "WEBP", quality=85, method=6)
@@ -60,10 +64,10 @@ def degree(path: str) -> None:
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4) or sys.argv[3:] not in ([], ["top"], ["bottom"]):
         sys.exit(__doc__)
     OUT.mkdir(parents=True, exist_ok=True)
-    portrait(sys.argv[1])
+    portrait(sys.argv[1], sys.argv[3] if len(sys.argv) == 4 else "top")
     degree(sys.argv[2])
 
 

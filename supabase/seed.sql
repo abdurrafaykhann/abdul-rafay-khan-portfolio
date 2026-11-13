@@ -56,15 +56,25 @@ values
   ('socials', '{"linkedin": "https://www.linkedin.com/in/abdul-rafay-8438b9430/"}'::jsonb)
 on conflict (key) do nothing;
 
--- Education (from the CV). photo_url / certificate_url are added in the admin.
+-- Education (from the CV). The BSc photos live in public/education/
+-- (made with tools/education_photos.py; the degree's QR code is blurred).
 insert into public.education
-  (qualification, institution, start_label, end_label, grade, sort)
-select v.qualification, v.institution, v.start_label, v.end_label, v.grade, v.sort
+  (qualification, institution, start_label, end_label, grade, sort,
+   photo_url, photo_alt, certificate_url, certificate_alt)
+select v.qualification, v.institution, v.start_label, v.end_label, v.grade, v.sort,
+       v.photo_url, v.photo_alt, v.certificate_url, v.certificate_alt
 from (values
-  ('BSc Computer Science',            'University of Hertfordshire', 'Feb 2023', 'Jan 2026', 'CGPA 3.9', 1),
-  ('Intermediate (Pre-Engineering)',  'DA Degree College',           'Feb 2020', 'Feb 2023', 'Grade A',  2),
-  ('O Levels',                        'Beaconhouse',                 'Mar 2006', 'Jun 2019', 'Grade A',  3)
-) as v (qualification, institution, start_label, end_label, grade, sort)
+  ('BSc Computer Science', 'University of Hertfordshire', 'Feb 2023', 'Jan 2026', 'CGPA 3.9', 1,
+   '/education/graduation.webp',
+   'Abdul Rafay Khan in his University of Hertfordshire graduation gown',
+   '/education/degree.webp',
+   'University of Hertfordshire degree certificate: Bachelor of Science with First Class Honours in Computer Science'),
+  ('Intermediate (Pre-Engineering)', 'DA Degree College', 'Feb 2020', 'Feb 2023', 'Grade A', 2,
+   null, '', null, ''),
+  ('O Levels', 'Beaconhouse', 'Mar 2006', 'Jun 2019', 'Grade A', 3,
+   null, '', null, '')
+) as v (qualification, institution, start_label, end_label, grade, sort,
+        photo_url, photo_alt, certificate_url, certificate_alt)
 where not exists (select 1 from public.education);
 
 -- ── Draft 1: Sentinel ───────────────────────────────────────────────
