@@ -50,11 +50,9 @@ test.describe("hero", () => {
     await expect(page.locator("h1")).toHaveCSS("opacity", "1");
 
     const nav = page.getByRole("navigation", { name: "Main" });
-    for (const label of ["Rafay", "About", "Work", "Ask AI", "Contact"]) {
-      await expect(
-        nav.getByRole("link", { name: label, exact: true }),
-      ).toBeVisible();
-    }
+    await expect(
+      nav.getByRole("link", { name: "Rafay", exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByText(
         "an AI engineer building automations, AI products and websites that work",

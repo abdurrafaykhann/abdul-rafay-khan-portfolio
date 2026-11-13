@@ -9,7 +9,11 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    include: ["tests/unit/**/*.test.{ts,tsx}"],
+    // tests/db runs the real SQL migrations in an in-process Postgres
+    include: ["tests/unit/**/*.test.{ts,tsx}", "tests/db/**/*.test.ts"],
+    testTimeout: 30_000,
+    // Locally, keep to 2 workers so the run fits in 8 GB of RAM.
+    maxWorkers: process.env.CI ? undefined : 2,
     setupFiles: ["tests/unit/setup.ts"],
   },
 });

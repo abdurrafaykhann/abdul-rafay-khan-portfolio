@@ -3,28 +3,17 @@
 import { useEffect, useState } from "react";
 import { ScrollMarquee } from "@/components/motion/ScrollMarquee";
 import { About } from "@/components/sections/About";
+import { WhatIDo } from "@/components/sections/WhatIDo";
+import { Work } from "@/components/sections/Work";
+import { filterCategories, whatIDoCategories } from "@/lib/data/select";
 import type { MarqueeItem } from "@/lib/marquee";
+import { FIXTURE_CONTENT, fixtureImage } from "./fixtures";
 
 /**
  * DEV-ONLY playground (never part of the production build).
- * Lets the scroll marquee and About section be reviewed before real content
- * exists. All media here is generated on the fly and labelled as a fixture.
+ * Lets every content-driven section be reviewed before real content exists.
+ * All media and text here is generated and labelled as a fixture.
  */
-
-const HUES = [285, 310, 265, 20, 200, 330, 240, 35, 180];
-
-function fixtureImage(n: number): string {
-  const hue = HUES[n % HUES.length];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="270">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="hsl(${hue} 70% 22%)"/><stop offset="1" stop-color="hsl(${(hue + 50) % 360} 75% 45%)"/>
-</linearGradient></defs>
-<rect width="420" height="270" fill="url(#g)"/>
-<text x="210" y="128" fill="#fff" font-family="sans-serif" font-size="26" font-weight="700" text-anchor="middle">DEV FIXTURE ${n + 1}</text>
-<text x="210" y="162" fill="#fff" opacity=".7" font-family="sans-serif" font-size="15" text-anchor="middle">not real content</text>
-</svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
 
 /** Records ~1 s of an animated canvas as a WebM clip (blob URL). */
 async function fixtureVideo(): Promise<string | null> {
@@ -65,9 +54,6 @@ async function fixtureVideo(): Promise<string | null> {
   recorder.stop();
   return done;
 }
-
-const FIXTURE_BIO =
-  "Dev fixture text, not real content. This paragraph only exists so the scroll reveal can be reviewed: each character brightens in turn as the section moves up the screen. The real bio comes from the admin.";
 
 export function DevPlayground() {
   const [items, setItems] = useState<MarqueeItem[]>([]);
@@ -115,8 +101,13 @@ export function DevPlayground() {
         </p>
       </div>
       <ScrollMarquee items={items} />
-      <About text={FIXTURE_BIO} />
-      <div className="h-[60vh]" />
+      <About text={FIXTURE_CONTENT.site.aboutText!} />
+      <WhatIDo
+        categories={whatIDoCategories(FIXTURE_CONTENT)}
+        linkableSlugs={filterCategories(FIXTURE_CONTENT).map((c) => c.slug)}
+      />
+      <Work content={FIXTURE_CONTENT} overlap />
+      <div className="h-[30vh]" />
     </main>
   );
 }

@@ -1,7 +1,8 @@
 import { PlainModeToggle } from "@/components/ui/PlainModeToggle";
+import type { NavLink } from "@/lib/data/select";
 import { site } from "@/lib/site";
 
-export type NavLink = { label: string; href: string };
+export type { NavLink };
 
 const linkClass = "transition-opacity duration-200 hover:opacity-70";
 
