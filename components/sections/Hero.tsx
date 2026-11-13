@@ -56,7 +56,9 @@ export function Hero({ links, tagline, portraitSrc }: HeroProps) {
                 fetchPriority="high"
                 decoding="async"
                 draggable={false}
-                className="block h-auto w-full select-none"
+                // max-h keeps the head below the navbar on short screens; the
+                // mask fades the bottom of the portrait into the background.
+                className="mx-auto block h-auto max-h-[78svh] w-auto max-w-full [mask-image:linear-gradient(to_bottom,black_55%,transparent_97%)] select-none"
               />
             </Magnet>
           </FadeIn>

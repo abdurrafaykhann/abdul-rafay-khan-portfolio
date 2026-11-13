@@ -8,6 +8,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
+  // Locally, keep to 2 browsers so the run fits in 8 GB of RAM.
+  workers: isCI ? undefined : 2,
   reporter: isCI ? "github" : "list",
   use: {
     baseURL: `http://localhost:${PORT}`,
