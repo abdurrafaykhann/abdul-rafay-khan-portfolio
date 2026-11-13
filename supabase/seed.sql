@@ -44,7 +44,7 @@ values
    to_jsonb('an AI engineer building automations, AI products and websites that work'::text)),
   -- No employer names, on purpose.
   ('about_text',
-   to_jsonb('I''m a Computer Science graduate (CGPA 3.9) and a full-stack developer and AI engineer. I build AI agents, n8n automations, full-stack web apps and interactive 3D websites. I''ve built business management software and worked on a banking risk-management system, and today I run my own technology agency and freelance for clients. My approach is business-first: understand the problem, choose the right technology, and ship something that is easy to maintain.'::text)),
+   to_jsonb('I''m a Computer Science graduate (CGPA 3.9) and a full-stack developer and AI engineer. I build AI agents, n8n automations, full-stack web apps and interactive 3D websites. I''ve built business management software and worked on a banking risk-management system, and today I build for clients as a freelancer. My approach is business-first: understand the problem, choose the right technology, and ship something that is easy to maintain.'::text)),
   ('skills', '[
     {"group": "AI & Automation", "items": ["Agentic AI", "LangChain", "AI agents", "n8n workflow automation", "AI integrations"]},
     {"group": "Frontend", "items": ["JavaScript", "React", "HTML", "CSS", "Three.js", "WebGL", "Responsive web design", "UX"]},
