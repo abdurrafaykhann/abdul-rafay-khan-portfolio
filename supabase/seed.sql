@@ -47,6 +47,7 @@ values
    to_jsonb('I''m a Computer Science graduate (CGPA 3.9) and a full-stack developer and AI engineer. I build AI agents, n8n automations, full-stack web apps and interactive 3D websites. I''ve built business management software and worked on a banking risk-management system, and today I build for clients as a freelancer. My approach is business-first: understand the problem, choose the right technology, and ship something that is easy to maintain.'::text)),
   ('skills', '[
     {"group": "AI & Automation", "items": ["Agentic AI", "LangChain", "AI agents", "n8n workflow automation", "AI integrations"]},
+    {"group": "Machine Learning & Data Science", "items": ["Data Science", "Machine Learning", "Deep Learning", "Computer Vision", "Model Training", "Data Preprocessing & Augmentation"]},
     {"group": "Frontend", "items": ["JavaScript", "React", "HTML", "CSS", "Three.js", "WebGL", "Responsive web design", "UX"]},
     {"group": "Backend & APIs", "items": ["Python", "Node.js", "Django", "REST APIs", "Integrations"]},
     {"group": "Databases", "items": ["SQL", "Database design", "Data modelling"]},
