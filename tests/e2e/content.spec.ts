@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 /**
@@ -5,13 +6,22 @@ import { expect, test, type Page } from "@playwright/test";
  * clone): only the hero shows — no empty sections, no dead nav links.
  * Skipped when a local .env.local points the dev server at a real database.
  */
+// The dev server reads .env.local; check for a database URL there too
+// (only whether the variable has a value; nothing is printed).
+const dbConfigured =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  (fs.existsSync(".env.local") &&
+    /^NEXT_PUBLIC_SUPABASE_URL=\S+/m.test(
+      fs.readFileSync(".env.local", "utf8"),
+    ));
+
 test.describe("home without content", () => {
-  test.skip(!!process.env.NEXT_PUBLIC_SUPABASE_URL, "a database is configured");
+  test.skip(dbConfigured, "a database is configured");
 
   test("hides every content section and its nav link", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toBeVisible();
-    for (const id of ["about", "what-i-do", "work"]) {
+    for (const id of ["about", "what-i-do", "work", "education"]) {
       await expect(page.locator(`#${id}`)).toHaveCount(0);
     }
     await expect(page.locator("[data-marquee-row]")).toHaveCount(0);
@@ -22,7 +32,9 @@ test.describe("home without content", () => {
       0,
     );
   });
+});
 
+test.describe("protected routes", () => {
   test("draft preview rejects a wrong or missing secret", async ({
     request,
   }) => {
@@ -41,6 +53,24 @@ test.describe("home without content", () => {
         })
       ).status(),
     ).toBe(401);
+  });
+});
+
+/** With the real database: Education & Skills from the CV, no employers. */
+test.describe("home with the database", () => {
+  test.skip(!dbConfigured, "no database configured");
+
+  test("shows Education & Skills and never an employer name", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const education = page.locator("#education");
+    await expect(education).toBeVisible();
+    await expect(education.locator("ol > li")).toHaveCount(3);
+    await expect(education.getByText("BSc Computer Science")).toBeVisible();
+    await expect(page.locator("#skills")).toBeVisible();
+    const text = await page.locator("main").innerText();
+    expect(text).not.toMatch(/\b(Bank|Ltd|Limited|Company|Global|agency)\b/i);
   });
 });
 

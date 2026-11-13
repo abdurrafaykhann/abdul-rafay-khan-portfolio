@@ -5,7 +5,12 @@ import { ScrollMarquee } from "@/components/motion/ScrollMarquee";
 import { About } from "@/components/sections/About";
 import { WhatIDo } from "@/components/sections/WhatIDo";
 import { Work } from "@/components/sections/Work";
-import { filterCategories, whatIDoCategories } from "@/lib/data/select";
+import { Education } from "@/components/sections/Education";
+import {
+  featuredEducation,
+  filterCategories,
+  whatIDoCategories,
+} from "@/lib/data/select";
 import type { MarqueeItem } from "@/lib/marquee";
 import { FIXTURE_CONTENT, fixtureImage } from "./fixtures";
 
@@ -107,6 +112,11 @@ export function DevPlayground() {
         linkableSlugs={filterCategories(FIXTURE_CONTENT).map((c) => c.slug)}
       />
       <Work content={FIXTURE_CONTENT} overlap />
+      <Education
+        entries={FIXTURE_CONTENT.education}
+        featured={featuredEducation(FIXTURE_CONTENT)}
+        skills={FIXTURE_CONTENT.site.skills}
+      />
       <div className="h-[30vh]" />
     </main>
   );

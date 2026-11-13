@@ -2,11 +2,13 @@ import { Suspense } from "react";
 import { DraftBanner } from "@/components/DraftBanner";
 import { ScrollMarquee } from "@/components/motion/ScrollMarquee";
 import { About } from "@/components/sections/About";
+import { Education } from "@/components/sections/Education";
 import { Hero } from "@/components/sections/Hero";
 import { WhatIDo } from "@/components/sections/WhatIDo";
 import { Work } from "@/components/sections/Work";
 import { getContent } from "@/lib/data/content";
 import {
+  featuredEducation,
   filterCategories,
   marqueeItems,
   navLinks,
@@ -62,6 +64,14 @@ async function Home() {
         />
       )}
       {show.work && <Work content={content} overlap={show.whatIDo} />}
+      {show.education && (
+        <Education
+          entries={content.education}
+          featured={featuredEducation(content)}
+          skills={content.site.skills}
+          overlap={show.whatIDo && !show.work}
+        />
+      )}
       <Suspense fallback={null}>
         <DraftBanner />
       </Suspense>

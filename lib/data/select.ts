@@ -1,6 +1,7 @@
 import type { MarqueeItem } from "../marquee";
 import type {
   Category,
+  EducationEntry,
   Project,
   ProjectStatus,
   ProjectType,
@@ -118,6 +119,8 @@ export type SectionVisibility = {
   about: boolean;
   whatIDo: boolean;
   work: boolean;
+  /** Education & Skills: shown when there is either */
+  education: boolean;
 };
 
 export function visibleSections(content: SiteContent): SectionVisibility {
@@ -126,7 +129,14 @@ export function visibleSections(content: SiteContent): SectionVisibility {
     about: !!content.site.aboutText,
     whatIDo: whatIDoCategories(content).length > 0,
     work: content.projects.length > 0,
+    education: content.education.length > 0 || content.site.skills.length > 0,
   };
+}
+
+/** The entry whose photos headline the Education section: the first one
+ *  (in admin order) that has a photo or a certificate image. */
+export function featuredEducation(content: SiteContent): EducationEntry | null {
+  return content.education.find((e) => e.photo || e.certificate) ?? null;
 }
 
 export type NavLink = { label: string; href: string };

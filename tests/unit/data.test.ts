@@ -148,6 +148,7 @@ describe("section visibility (no empty sections, ever)", () => {
       about: false,
       whatIDo: false,
       work: false,
+      education: false,
     });
     expect(navLinks(show)).toEqual([]);
   });

@@ -43,7 +43,7 @@ test.describe("hero", () => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveClass(/motion/);
     // every FadeIn finishes and leaves its content fully visible
-    await expect(page.locator('[data-fade="pending"]')).toHaveCount(0);
+    await expect(page.locator('#top [data-fade="pending"]')).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Hi, i’m Rafay",
     );
@@ -58,7 +58,9 @@ test.describe("hero", () => {
         "an AI engineer building automations, AI products and websites that work",
       ),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Contact Me" })).toBeVisible();
+    await expect(
+      page.locator("#top").getByRole("link", { name: "Contact Me" }),
+    ).toBeVisible();
   });
 
   test("reduced motion: content is visible immediately, no animation", async ({
@@ -75,6 +77,7 @@ test.describe("hero", () => {
     page,
   }) => {
     await page.goto("/");
+    await page.waitForFunction(() => window.__motionReady === true);
     const toggle = page.getByRole("button", { name: /plain mode/i });
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
 
@@ -95,6 +98,7 @@ test.describe("hero", () => {
   test("toggle is reachable by keyboard", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
+    await page.waitForFunction(() => window.__motionReady === true);
     const toggle = page.getByRole("button", { name: /plain mode/i });
     await toggle.focus();
     await page.keyboard.press("Enter");

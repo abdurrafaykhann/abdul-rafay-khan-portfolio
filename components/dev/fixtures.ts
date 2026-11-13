@@ -152,9 +152,41 @@ export const FIXTURE_CONTENT: SiteContent = {
     heroTagline: null,
     aboutText:
       "Dev fixture text, not real content. This paragraph only exists so the scroll reveal can be reviewed: each character brightens in turn as the section moves up the screen. The real bio comes from the admin.",
-    skills: [],
+    skills: [
+      {
+        group: "Fixture Group A",
+        items: ["Fixture 1", "Fixture 2", "Fixture 3"],
+      },
+      { group: "Fixture Group B", items: ["Fixture 4", "Fixture 5"] },
+    ],
     socials: {},
     resumeUrl: null,
   },
-  education: [],
+  education: [
+    {
+      id: "edu-1",
+      qualification: "Fixture Degree",
+      institution: "Fixture University",
+      start: "2023",
+      end: "2026",
+      grade: "Fixture grade",
+      description: "",
+      photo: { url: fixtureImage(1, "FIXTURE PHOTO"), alt: "Fixture photo" },
+      certificate: {
+        url: fixtureImage(4, "FIXTURE CERTIFICATE"),
+        alt: "Fixture certificate",
+      },
+    },
+    {
+      id: "edu-2",
+      qualification: "Fixture Diploma",
+      institution: "Fixture College",
+      start: "2020",
+      end: "2023",
+      grade: "",
+      description: "",
+      photo: null,
+      certificate: null,
+    },
+  ],
 };
