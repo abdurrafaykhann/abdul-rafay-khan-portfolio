@@ -8,19 +8,15 @@
   --font-sans: var(--font-kanit), ui-sans-serif, system-ui, sans-serif;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html,
-body {
-  background: #0c0c0c;
-  color: #d7e2ea;
-  font-family: var(--font-kanit), ui-sans-serif, system-ui, sans-serif;
+/* Tailwind's preflight already applies the global reset
+   (box-sizing: border-box; margin: 0; padding: 0). */
+@layer base {
+  html,
+  body {
+    background: #0c0c0c;
+    color: #d7e2ea;
+    font-family: var(--font-kanit), ui-sans-serif, system-ui, sans-serif;
+  }
 }
 
 /* Gradient heading text used by hero / section headings */
@@ -30,6 +26,35 @@ body {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+/* Hero heading size: the template's 14/15/16/17.5vw scaled so that
+   "Hi, i'm Rafay" takes the same share of the screen width as the original
+   "Hi, i'm jack" (measured in Kanit Black: 5.266em vs 5.996em wide). */
+.hero-heading-size {
+  --hero-fit: 0.878;
+  font-size: calc(14vw * var(--hero-fit));
+}
+@media (min-width: 640px) {
+  .hero-heading-size {
+    font-size: calc(15vw * var(--hero-fit));
+  }
+}
+@media (min-width: 768px) {
+  .hero-heading-size {
+    font-size: calc(16vw * var(--hero-fit));
+  }
+}
+@media (min-width: 1024px) {
+  .hero-heading-size {
+    font-size: calc(17.5vw * var(--hero-fit));
+  }
+}
+
+/* Entrance animations: content waiting for its FadeIn is hidden only while
+   motion is allowed. Plain mode, reduced motion or no JS => always visible. */
+html.motion [data-fade="pending"] {
+  opacity: 0;
 }
 
 :focus-visible {
