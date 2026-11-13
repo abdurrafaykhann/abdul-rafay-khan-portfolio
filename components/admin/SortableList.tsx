@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 function Row({
   id,
@@ -81,6 +81,9 @@ export function SortableList<T extends { id: string }>({
   getLabel: (item: T) => string;
   disabled?: boolean;
 }) {
+  // Stable id for dnd-kit's accessibility attributes, so the server and
+  // browser render the same aria-describedby (prevents a hydration mismatch).
+  const dndId = useId();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, {
@@ -98,6 +101,7 @@ export function SortableList<T extends { id: string }>({
 
   return (
     <DndContext
+      id={dndId}
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={onDragEnd}
