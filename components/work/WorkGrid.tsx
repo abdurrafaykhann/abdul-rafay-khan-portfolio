@@ -32,6 +32,11 @@ export type GridCategory = { slug: string; name: string };
 const useIsoLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
+/** One grid card (also used by the admin's live preview). */
+export function ProjectGridCard({ project }: { project: GridProject }) {
+  return <Card project={project} />;
+}
+
 function Card({ project }: { project: GridProject }) {
   const body = (
     <>

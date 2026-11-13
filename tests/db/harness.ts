@@ -35,6 +35,7 @@ export async function createDb(): Promise<Db> {
   // 0002_storage.sql needs Supabase's storage schema, so it is not run here.
   await db.exec(read("migrations/0001_init.sql"));
   await db.exec(read("migrations/0003_knowledge_base.sql"));
+  await db.exec(read("migrations/0005_admin_functions.sql"));
   await db.exec(read("seed.sql"));
   await db.query(
     `insert into private.config (key, value) values ('admin_email', $1)`,

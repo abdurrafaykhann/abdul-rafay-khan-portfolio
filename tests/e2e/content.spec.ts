@@ -67,7 +67,9 @@ test.describe("home with the database", () => {
     const education = page.locator("#education");
     await expect(education).toBeVisible();
     await expect(education.locator("ol > li")).toHaveCount(3);
-    await expect(education.getByText("BSc Computer Science")).toBeVisible();
+    await expect(
+      education.locator("ol").getByText("BSc Computer Science"),
+    ).toBeVisible();
     await expect(page.locator("#skills")).toBeVisible();
     const text = await page.locator("main").innerText();
     expect(text).not.toMatch(/\b(Bank|Ltd|Limited|Company|Global|agency)\b/i);
