@@ -3,6 +3,7 @@ import { DraftBanner } from "@/components/DraftBanner";
 import { ScrollMarquee } from "@/components/motion/ScrollMarquee";
 import { About } from "@/components/sections/About";
 import { AskLauncher } from "@/components/ask/AskLauncher";
+import { MatchSection } from "@/components/sections/MatchSection";
 import { AskSection } from "@/components/sections/AskSection";
 import { askEnabled } from "@/lib/ask/availability";
 import { Contact } from "@/components/sections/Contact";
@@ -89,6 +90,7 @@ async function Home() {
         />
       )}
       {askEnabled() && <AskSection />}
+      {askEnabled() && <MatchSection />}
       {show.contact && <Contact settings={content.site} />}
       {askEnabled() && <AskLauncher />}
       <Suspense fallback={null}>
