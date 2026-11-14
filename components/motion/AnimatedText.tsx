@@ -50,7 +50,9 @@ export function AnimatedText({ text, className, style }: AnimatedTextProps) {
   }, [motion, text]);
 
   return (
-    <p ref={ref} aria-label={text} className={className} style={style}>
+    <p ref={ref} className={className} style={style}>
+      {/* the animated characters are hidden from assistive tech; this is what it reads */}
+      <span className="sr-only">{text}</span>
       {words.map((chars, w) => (
         <span key={w} aria-hidden>
           <span className="inline-block whitespace-nowrap">

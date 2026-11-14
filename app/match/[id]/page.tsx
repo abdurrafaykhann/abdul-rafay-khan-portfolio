@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 import { z } from "zod";
 import { MatchResultView } from "@/components/match/MatchResultView";
 import { StoredMatchSchema } from "@/lib/match/run";
 import { serviceSupabase } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
 
-// Results are read by their random id on every request (never cached or indexed).
+// A result is generated the first time its id is opened (that request waits
+// for the page, so an unknown id answers with a real 404, as on case studies).
+// Results never change once stored; they are never indexed.
 export const instant = false;
+
+export function generateStaticParams() {
+  // Next.js needs at least one entry; this placeholder renders a 404.
+  return [{ id: "_" }];
+}
 
 export const metadata: Metadata = {
   title: `Role match — ${site.shortName}`,
@@ -21,7 +27,6 @@ export default async function MatchPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await connection();
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const db = serviceSupabase();
