@@ -2,6 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
 const isCI = !!process.env.CI;
+// E2E_BASE_URL=https://… runs the tests against a deployed site instead
+const remote = process.env.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -12,15 +14,19 @@ export default defineConfig({
   workers: isCI ? undefined : 2,
   reporter: isCI ? "github" : "list",
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: remote ?? `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    // CI tests the production build; locally the dev server is faster.
-    command: isCI ? `npm run start -- -p ${PORT}` : `npm run dev -- -p ${PORT}`,
-    url: `http://localhost:${PORT}`,
-    reuseExistingServer: !isCI,
-    timeout: 120_000,
-  },
+  webServer: remote
+    ? undefined
+    : {
+        // CI tests the production build; locally the dev server is faster.
+        command: isCI
+          ? `npm run start -- -p ${PORT}`
+          : `npm run dev -- -p ${PORT}`,
+        url: `http://localhost:${PORT}`,
+        reuseExistingServer: !isCI,
+        timeout: 120_000,
+      },
 });
