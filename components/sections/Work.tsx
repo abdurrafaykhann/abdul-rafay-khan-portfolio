@@ -44,7 +44,7 @@ export function Work({
       primaryCategory: primary
         ? { name: primary.name, color: primary.color }
         : null,
-      href: p.links.live ?? null,
+      href: `/work/${p.slug}`,
     };
   });
 

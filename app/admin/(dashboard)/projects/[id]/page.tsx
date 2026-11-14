@@ -21,6 +21,7 @@ export default async function EditProjectPage({
       initial={projectToInput(project) as ProjectData}
       categories={categories}
       types={types}
+      workflowPath={project.workflowJsonPath}
     />
   );
 }

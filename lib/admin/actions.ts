@@ -3,8 +3,14 @@
 import { updateTag } from "next/cache";
 import type { z } from "zod";
 import { CONTENT_TAG } from "@/lib/data/content";
+import {
+  sanitizeWorkflow,
+  summarizeRemovals,
+  type Removal,
+} from "@/lib/n8n/sanitize";
 import { assertAdmin, NotAdminError } from "./auth";
 import { friendlyDbError } from "./errors";
+import { checkSvg } from "./svg";
 import {
   CategorySchema,
   ProjectSchema,
@@ -30,23 +36,32 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
   return out;
 }
 
+/** A problem the admin should read as written (not a database error). */
+class UserError extends Error {}
+
 /**
  * Wraps an action: verifies the admin, runs it, refreshes the public site's
- * cache on success, and turns any failure into a readable message.
+ * cache on success (unless 
+efresh is false), and turns any failure into a
+ * readable message.
  */
 async function run<T>(
   fn: (
     supabase: Awaited<ReturnType<typeof assertAdmin>>["supabase"],
   ) => Promise<T>,
+  refresh = true,
 ): Promise<ActionResult<T>> {
   try {
     const { supabase } = await assertAdmin();
     const data = await fn(supabase);
-    updateTag(CONTENT_TAG);
+    if (refresh) updateTag(CONTENT_TAG);
     return { ok: true, data };
   } catch (error) {
     if (error instanceof NotAdminError) {
       return { ok: false, error: "You are not signed in as the admin." };
+    }
+    if (error instanceof UserError) {
+      return { ok: false, error: error.message };
     }
     const message = error instanceof Error ? error.message : String(error);
     console.error("[admin action]", message);
@@ -71,12 +86,100 @@ export async function saveProject(
       fieldErrors: fieldErrors(parsed.error),
     };
   }
+  // The diagram only counts when there is a Mermaid source for it.
+  const svgCheck = parsed.data.architectureMermaid
+    ? checkSvg(parsed.data.architectureSvg)
+    : ({ ok: true, svg: "" } as const);
+  if (!svgCheck.ok) {
+    return {
+      ok: false,
+      error: svgCheck.error,
+      fieldErrors: { architectureMermaid: svgCheck.error },
+    };
+  }
   return run(async (supabase) => {
     const { data, error } = await supabase.rpc("save_project", {
       p: toDbPayload(parsed.data),
     });
     check(error);
-    return { id: data as string };
+    const id = data as string;
+    const { error: svgError } = await supabase
+      .from("projects")
+      .update({ architecture_svg: svgCheck.svg || null })
+      .eq("id", id);
+    check(svgError);
+    return { id };
+  });
+}
+
+// ── n8n workflow download ──────────────────────────────────────────────
+
+export type WorkflowPreview = {
+  json: string;
+  removed: Removal[];
+  summary: string;
+};
+
+/**
+ * Step 1: clean an uploaded workflow and show what was removed. Nothing is
+ * stored: the raw file lives only in this request.
+ */
+export async function previewWorkflow(
+  raw: string,
+): Promise<ActionResult<WorkflowPreview>> {
+  return run(async () => {
+    const result = sanitizeWorkflow(raw);
+    if (!result.ok) throw new UserError(result.error);
+    return {
+      json: result.json,
+      removed: result.removed,
+      summary: summarizeRemovals(result.removed),
+    };
+  }, false);
+}
+
+/**
+ * Step 2 (after the admin reviewed the diff): clean again on the server
+ * (the browser's copy is never trusted), store only the cleaned file.
+ */
+export async function saveWorkflow(
+  projectId: string,
+  cleaned: string,
+): Promise<ActionResult<{ path: string }>> {
+  if (!/^[0-9a-f-]{36}$/i.test(projectId)) {
+    return { ok: false, error: "Unknown project." };
+  }
+  return run(async (supabase) => {
+    const result = sanitizeWorkflow(cleaned);
+    if (!result.ok) throw new UserError(result.error);
+    const path = `workflows/${projectId}-${Date.now()}.json`;
+    const { error: uploadError } = await supabase.storage
+      .from("media")
+      .upload(path, new Blob([result.json], { type: "application/json" }), {
+        contentType: "application/json",
+        upsert: false,
+      });
+    check(uploadError);
+    const { error } = await supabase
+      .from("projects")
+      .update({ workflow_json_path: path })
+      .eq("id", projectId);
+    check(error);
+    return { path };
+  });
+}
+
+export async function removeWorkflow(projectId: string): Promise<ActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(projectId)) {
+    return { ok: false, error: "Unknown project." };
+  }
+  return run(async (supabase) => {
+    const { error } = await supabase
+      .from("projects")
+      .update({ workflow_json_path: null })
+      .eq("id", projectId);
+    check(error);
+    return undefined;
   });
 }
 

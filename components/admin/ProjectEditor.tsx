@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { BlurHint, ImageSlot, VideoSlot } from "@/components/admin/MediaSlots";
 import { MarkdownField } from "@/components/admin/MarkdownField";
 import { Repeater } from "@/components/admin/Repeater";
+import { WorkflowUploader } from "@/components/admin/WorkflowUploader";
 import {
   Button,
   Checkbox,
@@ -21,6 +22,7 @@ import {
 import { ProjectStackCard } from "@/components/work/ProjectStackCard";
 import { ProjectGridCard } from "@/components/work/WorkGrid";
 import { saveProject } from "@/lib/admin/actions";
+import { renderDiagram } from "@/lib/admin/mermaid";
 import { formToProject, toGridProject } from "@/lib/admin/preview";
 import { publishProblems, slugify, type ProjectData } from "@/lib/admin/schema";
 import type { Category, ProjectType } from "@/lib/data/types";
@@ -50,6 +52,7 @@ export function emptyProject(): ProjectData {
     marqueePoster: "",
     marqueeClip: "",
     architectureMermaid: "",
+    architectureSvg: "",
     clientName: "",
     hideClientName: false,
     industry: "",
@@ -82,10 +85,13 @@ export function ProjectEditor({
   initial,
   categories,
   types,
+  workflowPath = null,
 }: {
   initial: ProjectData | null;
   categories: Category[];
   types: ProjectType[];
+  /** stored (cleaned) n8n workflow file, if any */
+  workflowPath?: string | null;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<ProjectData>(() => ({
@@ -136,8 +142,7 @@ export function ProjectEditor({
 
   const save = (publish?: boolean) =>
     startSaving(async () => {
-      const next =
-        publish === undefined ? form : { ...form, published: publish };
+      let next = publish === undefined ? form : { ...form, published: publish };
       if (next.published && problems.length) {
         setNotice({
           tone: "error",
@@ -146,6 +151,17 @@ export function ProjectEditor({
         return;
       }
       setErrors({});
+      // the diagram is drawn here in the browser and stored with the project
+      const rendered = await renderDiagram(next.architectureMermaid);
+      if (!rendered.ok) {
+        setErrors({ architectureMermaid: rendered.error });
+        setNotice({
+          tone: "error",
+          text: `The architecture diagram has a mistake: ${rendered.error}`,
+        });
+        return;
+      }
+      next = { ...next, architectureSvg: rendered.svg };
       const res = await saveProject(next);
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
@@ -542,7 +558,8 @@ export function ProjectEditor({
             </Field>
             <Field
               label="Architecture diagram (Mermaid)"
-              hint="Rendered to a picture when you save, from milestone M5."
+              hint="Drawn as a picture when you save. A mistake in the text is reported here first."
+              error={err("architectureMermaid")}
             >
               {(id) => (
                 <TextArea
@@ -554,6 +571,14 @@ export function ProjectEditor({
                 />
               )}
             </Field>
+            {form.architectureSvg && form.architectureMermaid.trim() && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(form.architectureSvg)}`}
+                alt="Architecture diagram as last saved"
+                className="w-full rounded-2xl border border-[#D7E2EA]/15 bg-[#0C0C0C] p-3"
+              />
+            )}
           </Section>
 
           <Section
@@ -782,7 +807,7 @@ export function ProjectEditor({
           {showAutomation ? (
             <Section
               title="Automation details"
-              description="For n8n automations. Workflow JSON download (with secrets removed) arrives in M5."
+              description="For n8n automations."
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Trigger">
@@ -824,6 +849,10 @@ export function ProjectEditor({
                 value={form.workflowScreenshot}
                 onChange={(v) => set("workflowScreenshot", v)}
                 previewClass="aspect-video"
+              />
+              <WorkflowUploader
+                projectId={form.id}
+                currentPath={workflowPath ?? null}
               />
             </Section>
           ) : (

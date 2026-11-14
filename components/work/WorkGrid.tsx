@@ -1,6 +1,7 @@
 "use client";
 
 import { Flip } from "gsap/Flip";
+import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/ui/Badges";
 import { gsap } from "@/lib/gsap";
@@ -84,14 +85,9 @@ function Card({ project }: { project: GridProject }) {
   const frame =
     "flex h-full flex-col gap-4 rounded-[36px] border border-[#D7E2EA]/25 p-3 pb-5 transition-colors duration-200";
   return project.href ? (
-    <a
-      href={project.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`${frame} hover:border-[#D7E2EA]/70`}
-    >
+    <Link href={project.href} className={`${frame} hover:border-[#D7E2EA]/70`}>
       {body}
-    </a>
+    </Link>
   ) : (
     <div className={frame}>{body}</div>
   );

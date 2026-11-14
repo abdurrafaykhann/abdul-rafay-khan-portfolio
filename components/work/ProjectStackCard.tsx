@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MetricBadge } from "@/components/ui/Badges";
 import { LiveProjectButton } from "@/components/ui/LiveProjectButton";
 import { cardBadges } from "@/lib/data/select";
@@ -70,7 +71,12 @@ export function ProjectStackCard({
               className="text-mist font-medium uppercase"
               style={{ fontSize: "clamp(1rem, 2.2vw, 2.1rem)" }}
             >
-              {project.title}
+              <Link
+                href={`/work/${project.slug}`}
+                className="underline-offset-4 hover:underline"
+              >
+                {project.title}
+              </Link>
             </h3>
           </div>
         </div>

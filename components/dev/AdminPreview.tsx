@@ -19,6 +19,7 @@ const projects: AdminProject[] = FIXTURE_CONTENT.projects.map((p, i) => ({
   clientApproved: false,
   hideClientName: false,
   architectureMermaid: "",
+  architectureSvg: "",
 }));
 
 const first = projects[0];
@@ -52,6 +53,7 @@ const editorData: ProjectData = {
   marqueePoster: "",
   marqueeClip: "",
   architectureMermaid: "",
+  architectureSvg: "",
   clientName: "",
   hideClientName: false,
   industry: "",

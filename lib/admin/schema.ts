@@ -71,6 +71,8 @@ export const ProjectSchema = z.object({
   marqueePoster: mediaUrl.default(""),
   marqueeClip: mediaUrl.default(""),
   architectureMermaid: optText(20_000),
+  /** rendered in the browser when saving; checked again on the server */
+  architectureSvg: z.string().max(300_000).default(""),
 
   clientName: optText(120),
   hideClientName: z.boolean().default(false),

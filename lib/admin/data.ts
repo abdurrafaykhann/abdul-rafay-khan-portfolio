@@ -96,6 +96,7 @@ export function projectToInput(p: AdminProject): ProjectInput {
     marqueePoster: p.marqueePoster ?? "",
     marqueeClip: p.marqueeClip ?? "",
     architectureMermaid: p.architectureMermaid,
+    architectureSvg: p.architectureSvg ?? "",
     clientName: p.rawClientName,
     hideClientName: p.hideClientName,
     industry: p.industry ?? "",

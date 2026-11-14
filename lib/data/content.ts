@@ -8,7 +8,7 @@ import { loadContent, type LoadedContent } from "./load";
 import type { SiteContent } from "./types";
 
 /** Cache tag for all public content. The admin calls
- *  revalidateTag(CONTENT_TAG, "max") after every save. */
+ *  updateTag(CONTENT_TAG) after every save. */
 export const CONTENT_TAG = "content";
 
 const snapshot = (snapshotFile as { content: SiteContent | null }).content;
@@ -55,4 +55,10 @@ export async function getContent(): Promise<LoadedContent> {
       : { stale: 30, revalidate: 60, expire: 3600 },
   );
   return result;
+}
+
+/** Slugs of every published project (for static generation and the sitemap). */
+export async function getPublishedSlugs(): Promise<string[]> {
+  const { content } = await getContent();
+  return content.projects.map((p) => p.slug);
 }

@@ -16,6 +16,7 @@ import {
   whatIDoCategories,
 } from "@/lib/data/select";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+import { jsonLd, personJsonLd } from "@/lib/seo";
 import { site } from "@/lib/site";
 
 /**
@@ -48,6 +49,17 @@ async function Home() {
 
   return (
     <main id="main" className="bg-ink" style={{ overflowX: "clip" }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd(
+            personJsonLd({
+              linkedin: content.site.socials.linkedin,
+              description: content.site.aboutText ?? undefined,
+            }),
+          ),
+        }}
+      />
       <Hero
         links={navLinks(show)}
         tagline={content.site.heroTagline ?? site.defaultTagline}

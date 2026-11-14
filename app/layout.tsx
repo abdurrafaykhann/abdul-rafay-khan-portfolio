@@ -3,6 +3,7 @@ import { Kanit } from "next/font/google";
 import { MotionReady } from "@/components/motion/MotionReady";
 import { MOTION_INIT_SCRIPT } from "@/lib/motion/prefs";
 import { site } from "@/lib/site";
+import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const kanit = Kanit({
@@ -13,8 +14,16 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: site.title,
   description: site.description,
+  openGraph: {
+    type: "website",
+    siteName: site.name,
+    title: site.title,
+    description: site.description,
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

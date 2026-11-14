@@ -114,6 +114,64 @@ export function cardBadges(project: Project): Badge[] {
   ];
 }
 
+export function findProject(
+  content: SiteContent,
+  slug: string,
+): Project | null {
+  return content.projects.find((p) => p.slug === slug) ?? null;
+}
+
+/** Previous / next project in the Work order (wraps around). */
+export function adjacentProjects(
+  content: SiteContent,
+  slug: string,
+): { prev: Project | null; next: Project | null } {
+  const list = content.projects;
+  const i = list.findIndex((p) => p.slug === slug);
+  if (i < 0 || list.length < 2) return { prev: null, next: null };
+  return {
+    prev: list[(i - 1 + list.length) % list.length],
+    next: list[(i + 1) % list.length],
+  };
+}
+
+/** What the case study page shows: each block only when it has content. */
+export function caseStudyBlocks(p: Project) {
+  const client = !!(p.clientName || p.industry || p.myRole || p.testimonial);
+  const automation = !!(
+    p.automationTrigger ||
+    p.apps.length ||
+    p.workflowScreenshot ||
+    p.savingsText ||
+    p.workflowJsonPath ||
+    p.media.some((m) => m.kind === "dashboard")
+  );
+  const product = !!(
+    p.productName ||
+    p.valueProp ||
+    p.productUrl ||
+    p.signupUrl ||
+    p.stage ||
+    p.pricingModel ||
+    p.features.length ||
+    p.changelog.length
+  );
+  return {
+    pitch: !!p.shortDesc,
+    demo: !!(p.demoVideo || p.links.video),
+    architecture: !!p.architectureSvg,
+    metrics: p.metrics.length > 0,
+    client,
+    automation,
+    product,
+    trainedVsIntegrated: p.trainedVsIntegrated.length > 0,
+    tech: p.tech.length > 0,
+    story: p.caseStudyMd.trim().length > 0,
+    links: Object.keys(p.links).length > 0,
+    gallery: p.media.some((m) => m.kind === "gallery"),
+  };
+}
+
 export type SectionVisibility = {
   marquee: boolean;
   about: boolean;
