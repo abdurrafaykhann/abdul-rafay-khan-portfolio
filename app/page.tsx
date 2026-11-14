@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { DraftBanner } from "@/components/DraftBanner";
 import { ScrollMarquee } from "@/components/motion/ScrollMarquee";
 import { About } from "@/components/sections/About";
+import { Contact } from "@/components/sections/Contact";
 import { Education } from "@/components/sections/Education";
 import { Hero } from "@/components/sections/Hero";
 import { WhatIDo } from "@/components/sections/WhatIDo";
@@ -83,6 +84,9 @@ async function Home() {
           skills={content.site.skills}
           overlap={show.whatIDo && !show.work}
         />
+      )}
+      {show.contact && (
+        <Contact settings={content.site} year={new Date().getFullYear()} />
       )}
       <Suspense fallback={null}>
         <DraftBanner />

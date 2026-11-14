@@ -37,6 +37,7 @@ export async function createDb(): Promise<Db> {
   await db.exec(read("migrations/0003_knowledge_base.sql"));
   await db.exec(read("migrations/0005_admin_functions.sql"));
   await db.exec(read("migrations/0006_track_events.sql"));
+  await db.exec(read("migrations/0007_contact_and_education_order.sql"));
   await db.exec(read("seed.sql"));
   await db.query(
     `insert into private.config (key, value) values ('admin_email', $1)`,

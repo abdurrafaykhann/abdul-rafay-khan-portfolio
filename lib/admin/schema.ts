@@ -283,7 +283,14 @@ export const TypeSchema = z.object({
 export type TypeInput = z.input<typeof TypeSchema>;
 
 export const ReorderSchema = z.object({
-  list: z.enum(["projects", "key", "marquee", "categories", "types"]),
+  list: z.enum([
+    "projects",
+    "key",
+    "marquee",
+    "categories",
+    "types",
+    "education",
+  ]),
   ids: z.array(id).max(500),
 });
 
@@ -297,3 +304,41 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 }
+
+// ── Site content ──────────────────────────────────────────────────────
+
+export const SiteSettingsSchema = z.object({
+  heroTagline: optText(200),
+  aboutText: optText(3000),
+  skills: z
+    .array(
+      z.object({
+        group: text(60).min(1, "Group name is required"),
+        items: z.array(text(60).min(1)).max(40),
+      }),
+    )
+    .max(12)
+    .default([]),
+  linkedin: webUrl.default(""),
+  github: webUrl.default(""),
+  email: z.union([z.email().max(254), z.literal("")]).default(""),
+  resumeUrl: mediaUrl.default(""),
+});
+export type SiteSettingsInput = z.input<typeof SiteSettingsSchema>;
+
+export const EducationSchema = z.object({
+  id: optId,
+  qualification: text(120).min(1, "Qualification is required"),
+  institution: text(120).min(1, "Institution is required"),
+  start: optText(30),
+  end: optText(30),
+  grade: optText(60),
+  description: optText(400),
+  photoUrl: mediaUrl.default(""),
+  photoAlt: optText(200),
+  certificateUrl: mediaUrl.default(""),
+  certificateAlt: optText(200),
+});
+export type EducationInput = z.input<typeof EducationSchema>;
+
+export const MessageStatusSchema = z.enum(["new", "read", "archived"]);

@@ -2,7 +2,9 @@ import "server-only";
 import { mapCategory, mapProject, mapProjectType } from "@/lib/data/map";
 import type { Category, Project, ProjectType } from "@/lib/data/types";
 import { requireAdmin } from "./auth";
-import type { ProjectInput } from "./schema";
+import { mapEducation, mapSiteSettings } from "@/lib/data/map";
+import { summarizeEvents, type EventRow, type Insights } from "./insights";
+import type { EducationInput, ProjectInput, SiteSettingsInput } from "./schema";
 
 /** Admin reads: everything (drafts included), as the signed-in admin. Never cached. */
 
@@ -141,4 +143,101 @@ export function projectToInput(p: AdminProject): ProjectInput {
       alt: m.alt,
     })),
   };
+}
+
+// ── Site content, education, messages, insights ───────────────────────
+
+export async function adminSite(): Promise<{
+  settings: SiteSettingsInput;
+  education: (EducationInput & { id: string })[];
+}> {
+  const { supabase } = await requireAdmin();
+  const [site, edu] = await Promise.all([
+    supabase.from("site_content").select("key, value"),
+    supabase.from("education").select("*").order("sort"),
+  ]);
+  for (const r of [site, edu]) if (r.error) throw new Error(r.error.message);
+  const s = mapSiteSettings(site.data ?? []);
+  return {
+    settings: {
+      heroTagline: s.heroTagline ?? "",
+      aboutText: s.aboutText ?? "",
+      skills: s.skills,
+      linkedin: s.socials.linkedin ?? "",
+      github: s.socials.github ?? "",
+      email: s.socials.email ?? "",
+      resumeUrl: s.resumeUrl ?? "",
+    },
+    education: (edu.data ?? []).map((row) => {
+      const e = mapEducation(row);
+      return {
+        id: e.id,
+        qualification: e.qualification,
+        institution: e.institution,
+        start: e.start,
+        end: e.end,
+        grade: e.grade,
+        description: e.description,
+        photoUrl: e.photo?.url ?? "",
+        photoAlt: e.photo?.alt ?? "",
+        certificateUrl: e.certificate?.url ?? "",
+        certificateAlt: e.certificate?.alt ?? "",
+      };
+    }),
+  };
+}
+
+export type AdminMessage = {
+  id: string;
+  name: string;
+  email: string;
+  body: string;
+  status: "new" | "read" | "archived";
+  createdAt: string;
+};
+
+export async function adminMessages(): Promise<AdminMessage[]> {
+  const { supabase } = await requireAdmin();
+  const { data, error } = await supabase
+    .from("messages")
+    .select("id, name, email, body, status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(300);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((m) => ({
+    id: m.id as string,
+    name: m.name as string,
+    email: m.email as string,
+    body: m.body as string,
+    status: m.status as AdminMessage["status"],
+    createdAt: m.created_at as string,
+  }));
+}
+
+/** Number of unread messages (for the nav badge). */
+export async function unreadMessageCount(): Promise<number> {
+  const { supabase } = await requireAdmin();
+  const { count } = await supabase
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "new");
+  return count ?? 0;
+}
+
+export async function adminInsights(): Promise<Insights> {
+  const { supabase } = await requireAdmin();
+  const [events, projects] = await Promise.all([
+    supabase
+      .from("events")
+      .select("type, project_id, target, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20000),
+    supabase.from("projects").select("id, title"),
+  ]);
+  for (const r of [events, projects])
+    if (r.error) throw new Error(r.error.message);
+  return summarizeEvents(
+    (events.data ?? []) as EventRow[],
+    (projects.data ?? []) as { id: string; title: string }[],
+  );
 }

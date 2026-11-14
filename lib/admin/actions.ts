@@ -13,11 +13,16 @@ import { friendlyDbError } from "./errors";
 import { checkSvg } from "./svg";
 import {
   CategorySchema,
+  EducationSchema,
+  MessageStatusSchema,
+  SiteSettingsSchema,
   ProjectSchema,
   ReorderSchema,
   TypeSchema,
   toDbPayload,
   type CategoryInput,
+  type EducationInput,
+  type SiteSettingsInput,
   type ProjectInput,
   type TypeInput,
 } from "./schema";
@@ -349,4 +354,139 @@ export async function deleteType(id: string): Promise<ActionResult> {
     check(error);
     return undefined;
   });
+}
+
+// ── Site content (tagline, about, skills, links, resume) ──────────────
+
+export async function saveSiteSettings(
+  input: SiteSettingsInput,
+): Promise<ActionResult> {
+  const parsed = SiteSettingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Some fields need attention.",
+      fieldErrors: fieldErrors(parsed.error),
+    };
+  }
+  const s = parsed.data;
+  const socials = Object.fromEntries(
+    Object.entries({
+      linkedin: s.linkedin,
+      github: s.github,
+      email: s.email,
+    }).filter(([, v]) => v),
+  );
+  const skills = s.skills.filter((g) => g.items.length > 0);
+  // An empty value removes the key: the site falls back to its default, or
+  // hides the section that needed it.
+  const entries: [string, unknown, boolean][] = [
+    ["hero_tagline", s.heroTagline, !!s.heroTagline],
+    ["about_text", s.aboutText, !!s.aboutText],
+    ["skills", skills, skills.length > 0],
+    ["socials", socials, Object.keys(socials).length > 0],
+    ["resume_url", s.resumeUrl, !!s.resumeUrl],
+  ];
+  return run(async (supabase) => {
+    for (const [key, value, keep] of entries) {
+      if (keep) {
+        const { error } = await supabase
+          .from("site_content")
+          .upsert({ key, value, updated_at: new Date().toISOString() });
+        check(error);
+      } else {
+        const { error } = await supabase
+          .from("site_content")
+          .delete()
+          .eq("key", key);
+        check(error);
+      }
+    }
+    return undefined;
+  });
+}
+
+// ── Education ─────────────────────────────────────────────────────────
+
+export async function saveEducation(
+  input: EducationInput,
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = EducationSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Some fields need attention.",
+      fieldErrors: fieldErrors(parsed.error),
+    };
+  }
+  const e = parsed.data;
+  const row = {
+    qualification: e.qualification,
+    institution: e.institution,
+    start_label: e.start,
+    end_label: e.end,
+    grade: e.grade,
+    description: e.description,
+    photo_url: e.photoUrl || null,
+    photo_alt: e.photoAlt,
+    certificate_url: e.certificateUrl || null,
+    certificate_alt: e.certificateAlt,
+  };
+  return run(async (supabase) => {
+    if (e.id) {
+      const { error } = await supabase
+        .from("education")
+        .update(row)
+        .eq("id", e.id);
+      check(error);
+      return { id: e.id };
+    }
+    const { data: last } = await supabase
+      .from("education")
+      .select("sort")
+      .order("sort", { ascending: false })
+      .limit(1);
+    const sort = ((last?.[0]?.sort as number | undefined) ?? -1) + 1;
+    const { data, error } = await supabase
+      .from("education")
+      .insert({ ...row, sort })
+      .select("id")
+      .single();
+    check(error);
+    return { id: (data as { id: string }).id };
+  });
+}
+
+export async function deleteEducation(id: string): Promise<ActionResult> {
+  return run(async (supabase) => {
+    const { error } = await supabase.from("education").delete().eq("id", id);
+    check(error);
+    return undefined;
+  });
+}
+
+// ── Messages ──────────────────────────────────────────────────────────
+
+export async function setMessageStatus(
+  id: string,
+  status: string,
+): Promise<ActionResult> {
+  const parsed = MessageStatusSchema.safeParse(status);
+  if (!parsed.success) return { ok: false, error: "Unknown status." };
+  return run(async (supabase) => {
+    const { error } = await supabase
+      .from("messages")
+      .update({ status: parsed.data })
+      .eq("id", id);
+    check(error);
+    return undefined;
+  }, false);
+}
+
+export async function deleteMessage(id: string): Promise<ActionResult> {
+  return run(async (supabase) => {
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    check(error);
+    return undefined;
+  }, false);
 }

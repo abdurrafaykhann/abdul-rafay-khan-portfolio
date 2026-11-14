@@ -102,6 +102,16 @@ export function checkVideo(file: File): string | null {
   return null;
 }
 
+export const MAX_PDF_MB = 5;
+
+export function checkPdf(file: File): string | null {
+  if (file.type !== "application/pdf") return "Please choose a PDF file.";
+  if (file.size > MAX_PDF_MB * 1024 * 1024) {
+    return `The resume must be under ${MAX_PDF_MB} MB.`;
+  }
+  return null;
+}
+
 export function checkImage(file: File): string | null {
   if (!file.type.startsWith("image/")) return "That file is not an image.";
   if (file.size > MAX_IMAGE_INPUT_MB * 1024 * 1024)

@@ -172,6 +172,11 @@ export function caseStudyBlocks(p: Project) {
   };
 }
 
+function hasContact(content: SiteContent): boolean {
+  const { email, linkedin, github } = content.site.socials;
+  return !!(email || linkedin || github || content.site.resumeUrl);
+}
+
 export type SectionVisibility = {
   marquee: boolean;
   about: boolean;
@@ -179,6 +184,8 @@ export type SectionVisibility = {
   work: boolean;
   /** Education & Skills: shown when there is either */
   education: boolean;
+  /** Contact + footer: shown when there is an email, a profile link or a resume */
+  contact: boolean;
 };
 
 export function visibleSections(content: SiteContent): SectionVisibility {
@@ -188,6 +195,7 @@ export function visibleSections(content: SiteContent): SectionVisibility {
     whatIDo: whatIDoCategories(content).length > 0,
     work: content.projects.length > 0,
     education: content.education.length > 0 || content.site.skills.length > 0,
+    contact: hasContact(content),
   };
 }
 
@@ -204,6 +212,7 @@ export function navLinks(sections: SectionVisibility): NavLink[] {
   const links: NavLink[] = [];
   if (sections.about) links.push({ label: "About", href: "#about" });
   if (sections.work) links.push({ label: "Work", href: "#work" });
+  if (sections.contact) links.push({ label: "Contact", href: "#contact" });
   // "Ask AI" and "Contact" join when those sections ship (M6 / M9).
   return links;
 }
