@@ -69,7 +69,10 @@ describe("ProjectStackCard", () => {
     };
     render(<ProjectStackCard project={project} index={4} typeLabel={null} />);
     expect(screen.getByText("05")).toBeInTheDocument();
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    // no Live Project / GitHub buttons; only the title links to the case study
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", `/work/${project.slug}`);
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
