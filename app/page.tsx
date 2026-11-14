@@ -85,9 +85,7 @@ async function Home() {
           overlap={show.whatIDo && !show.work}
         />
       )}
-      {show.contact && (
-        <Contact settings={content.site} year={new Date().getFullYear()} />
-      )}
+      {show.contact && <Contact settings={content.site} />}
       <Suspense fallback={null}>
         <DraftBanner />
       </Suspense>

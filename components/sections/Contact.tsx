@@ -1,5 +1,6 @@
 import { FadeIn } from "@/components/motion/FadeIn";
 import { ContactForm } from "@/components/sections/ContactForm";
+import { CurrentYear } from "@/components/sections/CurrentYear";
 import type { SiteSettings } from "@/lib/data/types";
 import { site } from "@/lib/site";
 
@@ -10,13 +11,7 @@ const link =
  * Contact + footer. Each link appears only when it exists; the section
  * itself only when there is something to show.
  */
-export function Contact({
-  settings,
-  year,
-}: {
-  settings: SiteSettings;
-  year: number;
-}) {
+export function Contact({ settings }: { settings: SiteSettings }) {
   const { email, linkedin, github } = settings.socials;
   return (
     <section
@@ -89,7 +84,7 @@ export function Contact({
 
       <footer className="text-mist mx-auto mt-20 flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-[#D7E2EA]/15 pt-6 text-xs tracking-widest uppercase opacity-70 sm:mt-28">
         <span>
-          © {year} {site.name}
+          © <CurrentYear /> {site.name}
         </span>
         <a href="#top" className="hover:opacity-70">
           Back to top ↑
