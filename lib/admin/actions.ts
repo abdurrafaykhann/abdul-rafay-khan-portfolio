@@ -1,6 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { after } from "next/server";
+import { reindex } from "@/lib/rag/server";
 import type { z } from "zod";
 import { CONTENT_TAG } from "@/lib/data/content";
 import {
@@ -59,7 +61,12 @@ async function run<T>(
   try {
     const { supabase } = await assertAdmin();
     const data = await fn(supabase);
-    if (refresh) updateTag(CONTENT_TAG);
+    if (refresh) {
+      updateTag(CONTENT_TAG);
+      // keep the AI knowledge base in step with what is published; runs after
+      // the response, is cheap when nothing changed, and never throws
+      after(() => reindex());
+    }
     return { ok: true, data };
   } catch (error) {
     if (error instanceof NotAdminError) {
@@ -488,5 +495,26 @@ export async function deleteMessage(id: string): Promise<ActionResult> {
     const { error } = await supabase.from("messages").delete().eq("id", id);
     check(error);
     return undefined;
+  }, false);
+}
+
+// ── Knowledge base ────────────────────────────────────────────────────
+
+export type ReindexSummary = {
+  sources: number;
+  chunks: number;
+  added: number;
+  kept: number;
+  removed: number;
+};
+
+/** Re-embeds the published content. `force` throws every chunk away first. */
+export async function reindexEverything(
+  force: boolean,
+): Promise<ActionResult<ReindexSummary>> {
+  return run(async () => {
+    const outcome = await reindex({ force });
+    if (!outcome.ok) throw new UserError(outcome.message);
+    return outcome.result;
   }, false);
 }

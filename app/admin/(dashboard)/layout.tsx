@@ -23,6 +23,7 @@ const NAV = [
   { href: "/admin/education", label: "Education" },
   { href: "/admin/site", label: "Site" },
   { href: "/admin/messages", label: "Messages", badge: true },
+  { href: "/admin/knowledge", label: "Knowledge" },
   { href: "/admin/insights", label: "Insights" },
 ];
 

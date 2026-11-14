@@ -17,6 +17,11 @@ let signedIn = true;
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+// `after` only works inside a real request; run the callback straight away
+vi.mock("next/server", () => ({ after: (fn: () => unknown) => void fn() }));
+vi.mock("@/lib/rag/server", () => ({
+  reindex: vi.fn(async () => ({ ok: false })),
+}));
 vi.mock("@/lib/data/content", () => ({ CONTENT_TAG: "content" }));
 vi.mock("@/lib/admin/auth", () => {
   class NotAdminError extends Error {}
