@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 // Admin pages read the login cookie on every request, so they are never
 // prerendered (Next.js 16: allow this route to block on the server).
 export const instant = false;
+// background work after a save (re-indexing the AI knowledge base) needs time
+export const maxDuration = 60;
 
 const NAV = [
   { href: "/admin/projects", label: "Projects" },

@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { publicSupabase } from "@/lib/supabase/server";
+import { clientIp, visitorHash } from "@/lib/contact";
+import { allow } from "@/lib/rate-limit";
+import { publicSupabase, serviceSupabase } from "@/lib/supabase/server";
 
 const Body = z.object({
   type: z.enum(["view", "click"]),
@@ -35,6 +37,17 @@ export async function POST(request: NextRequest) {
   }
   const parsed = Body.safeParse(json);
   if (!parsed.success) return new Response(null, { status: 400 });
+
+  // a flood of fake events: 120 per 10 minutes per visitor (when the limiter is available)
+  if (serviceSupabase()) {
+    const visitor = visitorHash(
+      clientIp(request.headers.get("x-forwarded-for")),
+      request.headers.get("user-agent"),
+    );
+    if (!(await allow("track", visitor, 120, 600))) {
+      return new Response(null, { status: 204 });
+    }
+  }
 
   const client = publicSupabase();
   if (!client) return new Response(null, { status: 204 });
