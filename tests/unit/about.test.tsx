@@ -26,9 +26,17 @@ describe("AnimatedText", () => {
   it("wraps every character and keeps the text readable to screen readers", () => {
     const text = "Agents that work";
     const { container } = render(<AnimatedText text={text} />);
-    expect(screen.getByLabelText(text)).toBeInTheDocument();
+    // screen readers get one plain copy; the animated characters are hidden from them
+    expect(
+      screen.getByText(text, { selector: ".sr-only" }),
+    ).toBeInTheDocument();
     expect(container.querySelectorAll("[data-char]")).toHaveLength(14);
-    expect(container.querySelector("p")!.textContent).toBe(text);
+    container
+      .querySelectorAll("[data-char]")
+      .forEach((el) => expect(el.closest("[aria-hidden]")).not.toBeNull());
+    expect(container.querySelector("p")!.hasAttribute("aria-label")).toBe(
+      false,
+    );
   });
 });
 
@@ -38,7 +46,9 @@ describe("About", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "About me" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("My real bio.")).toBeInTheDocument();
+    expect(
+      screen.getByText("My real bio.", { selector: ".sr-only" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Contact Me" }),
     ).toBeInTheDocument();
