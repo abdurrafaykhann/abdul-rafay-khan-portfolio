@@ -57,6 +57,20 @@ html.motion [data-fade="pending"] {
   opacity: 0;
 }
 
+/* Above-the-fold entrance as a pure CSS animation (FadeIn css): it needs no
+   JavaScript, so the hero paints as soon as the page does. "backwards" holds
+   the hidden start state during the delay and leaves no styles behind. */
+@keyframes fade-in-css {
+  from {
+    opacity: 0;
+    transform: translate(var(--fade-x, 0px), var(--fade-y, 30px));
+  }
+}
+html.motion [data-fade="css"] {
+  animation: fade-in-css var(--fade-duration, 0.7s)
+    cubic-bezier(0.25, 0.1, 0.25, 1) var(--fade-delay, 0s) backwards;
+}
+
 /* AnimatedText: characters start dim only while motion is allowed
    (GSAP then drives each one to full opacity on scroll). */
 html.motion [data-char] {

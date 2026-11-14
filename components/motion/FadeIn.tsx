@@ -22,6 +22,12 @@ type FadeInProps = {
   /** starting offset in px */
   x?: number;
   y?: number;
+  /**
+   * Above-the-fold content: the entrance runs as a pure CSS animation, so it
+   * does not wait for JavaScript to load (this keeps the main image's paint
+   * fast). Same look and timing; no scroll trigger.
+   */
+  css?: boolean;
 };
 
 /**
@@ -39,13 +45,14 @@ export function FadeIn({
   duration = 0.7,
   x = 0,
   y = 30,
+  css = false,
 }: FadeInProps) {
   const ref = useRef<HTMLElement>(null);
   const motion = useMotionEnabled();
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || !motion || el.dataset.fade === "done") return;
+    if (css || !el || !motion || el.dataset.fade === "done") return;
 
     gsap.set(el, { opacity: 0, x, y });
     let tween: gsap.core.Tween | undefined;
@@ -76,10 +83,25 @@ export function FadeIn({
       tween?.kill();
       gsap.set(el, { clearProps: "opacity,transform" });
     };
-  }, [motion, delay, duration, x, y]);
+  }, [motion, delay, duration, x, y, css]);
 
   return (
-    <Tag ref={ref} data-fade="pending" className={className} style={style}>
+    <Tag
+      ref={ref}
+      data-fade={css ? "css" : "pending"}
+      className={className}
+      style={
+        css
+          ? ({
+              ...style,
+              "--fade-delay": `${delay}s`,
+              "--fade-duration": `${duration}s`,
+              "--fade-x": `${x}px`,
+              "--fade-y": `${y}px`,
+            } as CSSProperties)
+          : style
+      }
+    >
       {children}
     </Tag>
   );
