@@ -31,7 +31,7 @@ export default function HomePage() {
           <Hero
             links={[]}
             tagline={site.defaultTagline}
-            portraitSrc={getHeroPortrait()}
+            portrait={getHeroPortrait()}
           />
         </main>
       }
@@ -51,7 +51,7 @@ async function Home() {
       <Hero
         links={navLinks(show)}
         tagline={content.site.heroTagline ?? site.defaultTagline}
-        portraitSrc={getHeroPortrait()}
+        portrait={getHeroPortrait()}
       />
       {show.marquee && <ScrollMarquee items={marqueeItems(content)} />}
       {show.about && <About text={content.site.aboutText!} />}

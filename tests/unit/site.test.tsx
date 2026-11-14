@@ -21,7 +21,7 @@ describe("site identity", () => {
 
 describe("Hero", () => {
   it("renders heading, nav, tagline and contact button", () => {
-    render(<Hero links={links} tagline="my tagline" portraitSrc={null} />);
+    render(<Hero links={links} tagline="my tagline" portrait={null} />);
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Hi, i’m Rafay" }),
@@ -42,13 +42,21 @@ describe("Hero", () => {
   });
 
   it("shows no portrait (and no placeholder) until a photo exists", () => {
-    render(<Hero links={links} tagline="t" portraitSrc={null} />);
+    render(<Hero links={links} tagline="t" portrait={null} />);
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("shows the portrait with alt text when a photo exists", () => {
     render(
-      <Hero links={links} tagline="t" portraitSrc="/hero/portrait.webp" />,
+      <Hero
+        links={links}
+        tagline="t"
+        portrait={{
+          photo: "/hero/portrait.webp",
+          depth: null,
+          particles: null,
+        }}
+      />,
     );
     const img = screen.getByRole("img", {
       name: "Portrait of Abdul Rafay Khan",

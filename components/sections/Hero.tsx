@@ -1,3 +1,7 @@
+import {
+  HeroPortrait,
+  type PortraitAssets,
+} from "@/components/hero/HeroPortrait";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { Magnet } from "@/components/motion/Magnet";
 import { Navbar, type NavLink } from "@/components/sections/Navbar";
@@ -8,10 +12,10 @@ type HeroProps = {
   links: NavLink[];
   tagline: string;
   /** null until a photo exists: the hero then shows no portrait */
-  portraitSrc: string | null;
+  portrait: PortraitAssets | null;
 };
 
-export function Hero({ links, tagline, portraitSrc }: HeroProps) {
+export function Hero({ links, tagline, portrait }: HeroProps) {
   return (
     <section
       id="top"
@@ -44,21 +48,13 @@ export function Hero({ links, tagline, portraitSrc }: HeroProps) {
         </FadeIn>
       </div>
 
-      {portraitSrc && (
+      {portrait && (
         <div className="pointer-events-none absolute top-1/2 left-1/2 z-10 w-[280px] -translate-x-1/2 -translate-y-1/2 sm:top-auto sm:bottom-0 sm:w-[360px] sm:translate-y-0 md:w-[440px] lg:w-[520px]">
           <FadeIn delay={0.6} y={30}>
             <Magnet padding={150} strength={3}>
-              {/* Plain <img>: intrinsic size is unknown until the photo pipeline (M7). */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={portraitSrc}
+              <HeroPortrait
+                assets={portrait}
                 alt={`Portrait of ${site.name}`}
-                fetchPriority="high"
-                decoding="async"
-                draggable={false}
-                // max-h keeps the head below the navbar on short screens; the
-                // mask fades the bottom of the portrait into the background.
-                className="mx-auto block h-auto max-h-[78svh] w-auto max-w-full [mask-image:linear-gradient(to_bottom,black_55%,transparent_97%)] select-none"
               />
             </Magnet>
           </FadeIn>

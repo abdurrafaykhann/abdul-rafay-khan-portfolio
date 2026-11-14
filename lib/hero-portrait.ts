@@ -1,19 +1,23 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
+import type { PortraitAssets } from "@/components/hero/HeroPortrait";
 
-const CANDIDATES = ["portrait.avif", "portrait.webp", "portrait.png"] as const;
+const dir = path.join(process.cwd(), "public", "hero");
+const exists = (file: string) => fs.existsSync(path.join(dir, file));
 
 /**
- * Public URL of the hero portrait, or null when no photo has been added yet
+ * The hero photo and its 3D assets, or null when no photo has been added yet
  * (the hero then renders without a portrait — never a placeholder).
- * Drop a background-removed photo at public/hero/portrait.(avif|webp|png).
+ *   portrait.(avif|webp|png)   background-removed photo (tools/cutout.py)
+ *   depth.webp, particles.bin  3D layer (tools/portrait_pipeline.py)
  */
-export function getHeroPortrait(): string | null {
-  for (const file of CANDIDATES) {
-    if (fs.existsSync(path.join(process.cwd(), "public", "hero", file))) {
-      return `/hero/${file}`;
-    }
-  }
-  return null;
+export function getHeroPortrait(): PortraitAssets | null {
+  const photo = ["portrait.avif", "portrait.webp", "portrait.png"].find(exists);
+  if (!photo) return null;
+  return {
+    photo: `/hero/${photo}`,
+    depth: exists("depth.webp") ? "/hero/depth.webp" : null,
+    particles: exists("particles.bin") ? "/hero/particles.bin" : null,
+  };
 }
