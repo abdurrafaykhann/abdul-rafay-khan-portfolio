@@ -63,7 +63,7 @@ export function Hero({ links, tagline, portrait }: HeroProps) {
         {/* Final reveal line and scroll hint: shown only by the scroll timeline */}
         <p
           data-hero-final
-          className="text-mist pointer-events-none absolute inset-x-0 bottom-24 z-20 px-6 text-center text-[0.65rem] leading-relaxed font-medium tracking-[0.3em] uppercase opacity-0 sm:bottom-28 sm:text-sm md:bottom-32"
+          className="text-mist pointer-events-none absolute inset-x-0 bottom-32 z-20 px-6 text-center text-[0.65rem] leading-relaxed font-medium tracking-[0.3em] uppercase opacity-0 sm:bottom-28 sm:text-sm md:bottom-32"
         >
           AI Engineering <span className="text-[#B600A8]">×</span> Agentic AI{" "}
           <span className="text-[#BE4C00]">×</span> Full-Stack Development
