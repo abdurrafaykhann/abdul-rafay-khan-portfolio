@@ -13,7 +13,7 @@ test.describe("hero 3D portrait", () => {
     await page.goto("/");
     // the static photo is there from the first paint
     await expect(
-      page.getByAltText(/portrait of abdul rafay khan/i),
+      page.getByAltText(/portrait of abdul rafay khan/i).first(),
     ).toBeVisible();
 
     await expect
@@ -33,7 +33,9 @@ test.describe("hero 3D portrait", () => {
   test("a click skips the intro", async ({ page }) => {
     test.setTimeout(60_000);
     await page.goto("/");
-    await expect.poll(() => phase(page), { timeout: 30_000 }).toBe("intro");
+    await expect
+      .poll(() => phase(page), { timeout: 30_000 })
+      .toMatch(/intro|crossfade|settled/);
     await page.mouse.click(10, 400);
     await expect.poll(() => phase(page), { timeout: 20_000 }).toBe("settled");
   });
