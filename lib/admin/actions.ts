@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { revalidateTag, updateTag } from "next/cache";
 import { after } from "next/server";
 import { reindex } from "@/lib/rag/server";
 import type { z } from "zod";
@@ -65,7 +65,13 @@ async function run<T>(
       updateTag(CONTENT_TAG);
       // keep the AI knowledge base in step with what is published; runs after
       // the response, is cheap when nothing changed, and never throws
-      after(() => reindex());
+      after(async () => {
+        const outcome = await reindex();
+        // new galaxy positions: refresh the public pages
+        if (outcome.ok && outcome.galaxyChanged > 0) {
+          revalidateTag(CONTENT_TAG, "max");
+        }
+      });
     }
     return { ok: true, data };
   } catch (error) {
@@ -515,6 +521,7 @@ export async function reindexEverything(
   return run(async () => {
     const outcome = await reindex({ force });
     if (!outcome.ok) throw new UserError(outcome.message);
+    if (outcome.galaxyChanged > 0) updateTag(CONTENT_TAG);
     return outcome.result;
   }, false);
 }

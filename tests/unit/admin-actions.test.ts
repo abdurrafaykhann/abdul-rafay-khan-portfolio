@@ -16,7 +16,7 @@ const supabase = { rpc, from: vi.fn(() => fromChain) };
 let signedIn = true;
 
 vi.mock("server-only", () => ({}));
-vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+vi.mock("next/cache", () => ({ updateTag: vi.fn(), revalidateTag: vi.fn() }));
 // `after` only works inside a real request; run the callback straight away
 vi.mock("next/server", () => ({ after: (fn: () => unknown) => void fn() }));
 vi.mock("@/lib/rag/server", () => ({

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchContent } from "@/lib/data/fetch-content";
+import { updateGalaxy } from "@/lib/galaxy/server";
 import { serviceSupabase } from "@/lib/supabase/server";
 import { buildDocuments } from "./documents";
 import { defaultEmbedder, type Embedder } from "./embed";
@@ -73,7 +74,7 @@ export class SupabaseKbStore implements KbStore {
 }
 
 export type ReindexOutcome =
-  | { ok: true; result: SyncResult }
+  | { ok: true; result: SyncResult; galaxyChanged: number }
   | {
       ok: false;
       reason: "no-database" | "no-embedding-key" | "failed";
@@ -123,7 +124,14 @@ export async function reindex({
     const result = await syncIndex(new SupabaseKbStore(db), emb, docs, {
       force,
     });
-    return { ok: true, result };
+    // project positions in the 3D galaxy follow the indexed text
+    let galaxyChanged = 0;
+    try {
+      galaxyChanged = await updateGalaxy(db);
+    } catch (e) {
+      console.error("[galaxy]", e instanceof Error ? e.message : e);
+    }
+    return { ok: true, result, galaxyChanged };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("[reindex]", message);

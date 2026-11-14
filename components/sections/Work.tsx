@@ -1,7 +1,9 @@
 import { FadeIn } from "@/components/motion/FadeIn";
 import { StackingCards } from "@/components/motion/StackingCards";
 import { ProjectStackCard } from "@/components/work/ProjectStackCard";
-import { WorkGrid, type GridProject } from "@/components/work/WorkGrid";
+import { AllWork } from "@/components/work/AllWork";
+import type { GridProject } from "@/components/work/WorkGrid";
+import { galaxyLegend, galaxyNodes } from "@/lib/galaxy/nodes";
 import {
   cardImage,
   filterCategories,
@@ -25,6 +27,7 @@ export function Work({
   overlap: boolean;
 }) {
   const keys = keyProjects(content);
+  const nodes = galaxyNodes(content);
   const categories = filterCategories(content);
   const slugOf = new Map(content.categories.map((c) => [c.id, c.slug]));
 
@@ -88,9 +91,11 @@ export function Work({
             All work
           </h3>
         </FadeIn>
-        <WorkGrid
+        <AllWork
           projects={gridProjects}
           categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
+          nodes={nodes}
+          legend={galaxyLegend(nodes)}
         />
       </div>
     </section>
