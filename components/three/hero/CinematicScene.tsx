@@ -1,13 +1,16 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  Group,
   LinearFilter,
+  LinearSRGBColorSpace,
   NoColorSpace,
+  NoToneMapping,
+  PerspectiveCamera,
+  Scene,
   Texture,
   TextureLoader,
+  WebGLRenderer,
 } from "three";
 import type { PortraitLayout } from "@/lib/hero/choreography";
 import { CAMERA_Z, FOV, type Tier } from "@/lib/hero/config";
@@ -45,30 +48,105 @@ type Assets = {
   depth: Texture;
 };
 
-function World({
+/**
+ * Plain three.js host (no React Three Fiber, so its renderer and reconciler
+ * are not downloaded for this one canvas): a renderer that fills the stage,
+ * and one animation loop that advances the world. Pauses while off screen.
+ */
+function Stage({
   world,
   layout,
   skipSignal,
+  touch,
+  active,
   onPhase,
 }: {
   world: HeroWorld;
   layout: PortraitLayout;
   skipSignal: number;
+  touch: boolean;
+  active: boolean;
   onPhase: (phase: Phase) => void;
 }) {
-  const rootRef = useRef<Group>(null);
-  const reported = useRef<Phase | null>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(active);
+  const onPhaseRef = useRef(onPhase);
+  const wake = useRef<(() => void) | null>(null);
 
+  useEffect(() => {
+    activeRef.current = active;
+    if (active) wake.current?.();
+  }, [active]);
+  useEffect(() => {
+    onPhaseRef.current = onPhase;
+  }, [onPhase]);
   useEffect(() => world.setLayout(layout), [world, layout]);
   useEffect(() => {
     if (skipSignal > 0) world.skip();
   }, [world, skipSignal]);
 
-  // pointer in stage pixels (the canvas fills the stage)
   useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    const renderer = new WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+    // same colour handling as before: no automatic sRGB output, no tone mapping
+    renderer.outputColorSpace = LinearSRGBColorSpace;
+    renderer.toneMapping = NoToneMapping;
+    const maxDpr = touch ? 1.25 : 1.5;
+    const canvas = renderer.domElement;
+    canvas.style.cssText = "position:absolute;inset:0;width:100%;height:100%";
+    el.appendChild(canvas);
+
+    const scene = new Scene();
+    scene.add(world.root);
+    const camera = new PerspectiveCamera(FOV, 1, 0.05, 40);
+    camera.position.set(0, 0, CAMERA_Z);
+    camera.lookAt(0, 0, 0);
+
+    const resize = () => {
+      const w = el.clientWidth || 1;
+      const h = el.clientHeight || 1;
+      renderer.setPixelRatio(
+        Math.min(Math.max(window.devicePixelRatio, 1), maxDpr),
+      );
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(el);
+
+    let raf = 0;
+    let last = performance.now();
+    let reported: Phase | null = null;
+    let disposed = false;
+    const frame = (now: number) => {
+      raf = 0;
+      if (disposed || !activeRef.current) return;
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      world.update(camera, dt, renderer.domElement.height);
+      renderer.render(scene, camera);
+      if (reported !== world.phase) {
+        reported = world.phase;
+        onPhaseRef.current(world.phase);
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    wake.current = () => {
+      if (!raf && !disposed) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    if (activeRef.current) wake.current();
+
     const onMove = (e: PointerEvent) => {
-      const el = document.getElementById("hero-stage");
-      if (!el) return;
       const r = el.getBoundingClientRect();
       world.pointerMove(
         e.clientX - r.left,
@@ -77,18 +155,20 @@ function World({
       );
     };
     window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
-  }, [world]);
 
-  useFrame((state, delta) => {
-    world.update(state.camera, delta, state.gl.domElement.height);
-    if (reported.current !== world.phase) {
-      reported.current = world.phase;
-      onPhase(world.phase);
-    }
-  });
+    return () => {
+      disposed = true;
+      wake.current = null;
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      ro.disconnect();
+      scene.remove(world.root);
+      renderer.dispose();
+      canvas.remove();
+    };
+  }, [world, touch]);
 
-  return <primitive ref={rootRef} object={world.root} />;
+  return <div ref={host} style={{ position: "absolute", inset: 0 }} />;
 }
 
 function loadTexture(src: string): Promise<Texture> {
@@ -162,21 +242,13 @@ export default function CinematicScene(props: Props) {
 
   if (!world) return null;
   return (
-    <Canvas
-      linear
-      flat
-      dpr={[1, props.touch ? 1.25 : 1.5]}
-      frameloop={props.active ? "always" : "never"}
-      camera={{ position: [0, 0, CAMERA_Z], fov: FOV, near: 0.05, far: 40 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-      style={{ position: "absolute", inset: 0 }}
-    >
-      <World
-        world={world}
-        layout={props.layout}
-        skipSignal={props.skipSignal}
-        onPhase={onPhase}
-      />
-    </Canvas>
+    <Stage
+      world={world}
+      layout={props.layout}
+      skipSignal={props.skipSignal}
+      touch={props.touch}
+      active={props.active}
+      onPhase={onPhase}
+    />
   );
 }
