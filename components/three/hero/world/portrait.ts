@@ -1,4 +1,17 @@
-import * as THREE from "three";
+import {
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
+  Group,
+  Mesh,
+  PlaneGeometry,
+  Points,
+  ShaderMaterial,
+  Sphere,
+  Texture,
+  Vector2,
+  Vector3,
+} from "three";
 import {
   ASSEMBLE_SECONDS,
   CROSSFADE_SECONDS,
@@ -103,14 +116,14 @@ const photoFragment = /* glsl */ `
 
 export function createPortrait(o: {
   data: ParticleData;
-  photo: THREE.Texture;
-  depth: THREE.Texture;
+  photo: Texture;
+  depth: Texture;
   playIntro: boolean;
   touch: boolean;
 }) {
-  const group = new THREE.Group();
+  const group = new Group();
 
-  const photoMat = new THREE.ShaderMaterial({
+  const photoMat = new ShaderMaterial({
     vertexShader: photoVertex,
     fragmentShader: photoFragment,
     transparent: true,
@@ -119,12 +132,12 @@ export function createPortrait(o: {
     uniforms: {
       uPhoto: { value: o.photo },
       uDepth: { value: o.depth },
-      uPointer: { value: new THREE.Vector2() },
+      uPointer: { value: new Vector2() },
       uOpacity: { value: o.playIntro ? 0 : 1 },
     },
   });
-  const planeGeo = new THREE.PlaneGeometry(1, 1);
-  const photo = new THREE.Mesh(planeGeo, photoMat);
+  const planeGeo = new PlaneGeometry(1, 1);
+  const photo = new Mesh(planeGeo, photoMat);
   photo.renderOrder = 5;
 
   const n = o.data.count;
@@ -146,20 +159,20 @@ export function createPortrait(o: {
     delay[i] = rand();
     seed[i] = rand();
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(target, 3));
-  geo.setAttribute("aStart", new THREE.BufferAttribute(start, 3));
-  geo.setAttribute("aColor", new THREE.BufferAttribute(o.data.colors, 3));
-  geo.setAttribute("aDelay", new THREE.BufferAttribute(delay, 1));
-  geo.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1));
-  geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-  const particleMat = new THREE.ShaderMaterial({
+  const geo = new BufferGeometry();
+  geo.setAttribute("position", new BufferAttribute(target, 3));
+  geo.setAttribute("aStart", new BufferAttribute(start, 3));
+  geo.setAttribute("aColor", new BufferAttribute(o.data.colors, 3));
+  geo.setAttribute("aDelay", new BufferAttribute(delay, 1));
+  geo.setAttribute("aSeed", new BufferAttribute(seed, 1));
+  geo.boundingSphere = new Sphere(new Vector3(), 20);
+  const particleMat = new ShaderMaterial({
     vertexShader: particleVertex,
     fragmentShader: particleFragment,
     transparent: true,
     depthWrite: false,
     depthTest: false,
-    blending: THREE.AdditiveBlending,
+    blending: AdditiveBlending,
     uniforms: {
       uProgress: { value: o.playIntro ? 0 : 1 },
       uTime: { value: 0 },
@@ -167,10 +180,10 @@ export function createPortrait(o: {
       uScale: { value: 1000 },
       uFade: { value: o.playIntro ? 1 : 0 },
       uScatter: { value: 0 },
-      uMouse: { value: new THREE.Vector2(99, 99) },
+      uMouse: { value: new Vector2(99, 99) },
     },
   });
-  const particles = new THREE.Points(geo, particleMat);
+  const particles = new Points(geo, particleMat);
   particles.frustumCulled = false;
   particles.renderOrder = 6;
   group.add(photo, particles);

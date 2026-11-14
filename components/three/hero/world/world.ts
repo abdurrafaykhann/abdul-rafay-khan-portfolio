@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { Camera, Group, Texture } from "three";
 import {
   cameraZ,
   choreography,
@@ -30,15 +30,15 @@ export type HeroWorld = ReturnType<typeof createHeroWorld>;
 
 export function createHeroWorld(o: {
   data: ParticleData;
-  photo: THREE.Texture;
-  depth: THREE.Texture;
+  photo: Texture;
+  depth: Texture;
   playIntro: boolean;
   touch: boolean;
   tier: Tier;
   rig: HeroRig;
 }) {
-  const root = new THREE.Group();
-  const env = new THREE.Group();
+  const root = new Group();
+  const env = new Group();
   const portrait = createPortrait(o);
   const layers: Layer[] = [
     createLights(),
@@ -109,7 +109,7 @@ export function createHeroWorld(o: {
     },
 
     /** Advance one frame. `bufferHeight` is the canvas height in device px. */
-    update(camera: THREE.Camera, dt: number, bufferHeight: number) {
+    update(camera: Camera, dt: number, bufferHeight: number) {
       const step = Math.min(dt, 0.05);
       time += step;
       const c = choreography(o.rig.p);

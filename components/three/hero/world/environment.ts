@@ -1,4 +1,25 @@
-import * as THREE from "three";
+import {
+  AdditiveBlending,
+  AmbientLight,
+  BoxGeometry,
+  BufferGeometry,
+  CylinderGeometry,
+  DirectionalLight,
+  DoubleSide,
+  EdgesGeometry,
+  Group,
+  IcosahedronGeometry,
+  LineBasicMaterial,
+  LineSegments,
+  Material,
+  Mesh,
+  MeshStandardMaterial,
+  OctahedronGeometry,
+  PlaneGeometry,
+  PointLight,
+  ShaderMaterial,
+  Vector3,
+} from "three";
 import { HERO_COLORS as C, type Tier } from "@/lib/hero/config";
 import {
   color,
@@ -46,26 +67,26 @@ const glowFragment = /* glsl */ `
 `;
 
 function glowPlane(hex: string, shaft = false) {
-  const material = new THREE.ShaderMaterial({
+  const material = new ShaderMaterial({
     vertexShader: glowVertex,
     fragmentShader: glowFragment,
     transparent: true,
     depthWrite: false,
     depthTest: false,
-    blending: THREE.AdditiveBlending,
+    blending: AdditiveBlending,
     uniforms: {
       uColor: { value: color(hex) },
       uAlpha: { value: 0 },
       uShaft: { value: shaft ? 1 : 0 },
     },
   });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+  const mesh = new Mesh(new PlaneGeometry(1, 1), material);
   mesh.renderOrder = 0;
   return { mesh, material };
 }
 
 export function createAtmosphere(): Layer {
-  const group = new THREE.Group();
+  const group = new Group();
   // purple pulled a little towards magenta so the glow never reads blue
   const purple = glowPlane("#8A21AC");
   purple.mesh.position.set(0.1, 0.35, -4.6);
@@ -131,7 +152,7 @@ export function createDust(tier: Tier): Layer {
     }
     const pick = rand();
     dots.push({
-      p: new THREE.Vector3(x, y, z),
+      p: new Vector3(x, y, z),
       color: palette.find((p) => pick <= p.w)!.c,
       size: 0.006 + rand() * 0.012,
       order: 0,
@@ -162,17 +183,17 @@ export function createDust(tier: Tier): Layer {
 
 export function createNeuralNetwork(tier: Tier): Layer {
   const rand = seeded(23);
-  const nodes: THREE.Vector3[] = [];
+  const nodes: Vector3[] = [];
   for (let i = 0; i < tier.nodes; i++) {
     const behind = rand() < 0.3;
     const side = rand() < 0.5 ? -1 : 1;
     const x = behind ? (rand() - 0.5) * 1.6 : side * (0.6 + rand() * 2.1);
     const y = -0.85 + rand() * 1.9;
     const z = behind ? -3.4 + rand() * 1.5 : -3.0 + rand() * 2.5;
-    nodes.push(new THREE.Vector3(x, y, z));
+    nodes.push(new Vector3(x, y, z));
   }
   const maxR = Math.max(...nodes.map((n) => n.length()));
-  const orderOf = (v: THREE.Vector3) => (v.length() / maxR) * 0.75;
+  const orderOf = (v: Vector3) => (v.length() / maxR) * 0.75;
 
   const magenta = color(C.magenta);
   const purple = color(C.purple).lerp(color(C.mist), 0.15);
@@ -216,7 +237,7 @@ export function createNeuralNetwork(tier: Tier): Layer {
   const pts = createGlowPoints(dots, { wobble: true, seed: 41 });
   pts.points.renderOrder = 3;
 
-  const group = new THREE.Group();
+  const group = new Group();
   group.add(lines.lines, pts.points);
   return {
     object: group,
@@ -293,22 +314,22 @@ const panelFragment = /* glsl */ `
   }
 `;
 
-function edges(geo: THREE.BufferGeometry, hex: string) {
-  const eg = new THREE.EdgesGeometry(geo, 20);
-  const material = new THREE.LineBasicMaterial({
+function edges(geo: BufferGeometry, hex: string) {
+  const eg = new EdgesGeometry(geo, 20);
+  const material = new LineBasicMaterial({
     color: color(hex),
     transparent: true,
     opacity: 0,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: AdditiveBlending,
   });
-  const lines = new THREE.LineSegments(eg, material);
+  const lines = new LineSegments(eg, material);
   lines.renderOrder = 2;
   return { lines, material, geometry: eg };
 }
 
-function glass(geo: THREE.BufferGeometry, hex = "#120c1a") {
-  const material = new THREE.MeshStandardMaterial({
+function glass(geo: BufferGeometry, hex = "#120c1a") {
+  const material = new MeshStandardMaterial({
     color: color(hex),
     metalness: 0.9,
     roughness: 0.28,
@@ -316,20 +337,20 @@ function glass(geo: THREE.BufferGeometry, hex = "#120c1a") {
     opacity: 0,
     depthWrite: false,
   });
-  const mesh = new THREE.Mesh(geo, material);
+  const mesh = new Mesh(geo, material);
   mesh.renderOrder = 1;
   return { mesh, material };
 }
 
 export function createArchitecture(tier: Tier): Layer {
-  const group = new THREE.Group();
+  const group = new Group();
   const disposables: { dispose(): void }[] = [];
   /** [material, base opacity, 0 = always / 1 = with the stack reveal] */
-  const fades: [THREE.Material & { opacity: number }, number, number][] = [];
+  const fades: [Material & { opacity: number }, number, number][] = [];
 
   // Tall glass-and-metal structures far behind: the architecture of the space.
   if (tier.pillars) {
-    const pillarGeo = new THREE.BoxGeometry(1, 1, 1);
+    const pillarGeo = new BoxGeometry(1, 1, 1);
     disposables.push(pillarGeo);
     const spots: [number, number, number, number][] = [
       [-2.9, -4.2, 0.45, 5.2],
@@ -354,7 +375,7 @@ export function createArchitecture(tier: Tier): Layer {
   }
 
   // Interface panels (frontend, dashboard, API), off to the sides.
-  const panelGeo = new THREE.PlaneGeometry(0.82, 0.54);
+  const panelGeo = new PlaneGeometry(0.82, 0.54);
   disposables.push(panelGeo);
   const panelSpots: [number, number, number, number, number, string][] = [
     [-1.02, 0.28, -0.9, 0.45, 0, C.purple],
@@ -364,14 +385,14 @@ export function createArchitecture(tier: Tier): Layer {
   const panels = panelSpots
     .slice(0, tier.panels)
     .map(([x, y, z, ry, v, accent]) => {
-      const material = new THREE.ShaderMaterial({
+      const material = new ShaderMaterial({
         vertexShader: glowVertex,
         fragmentShader: panelFragment,
         transparent: true,
         depthWrite: false,
         depthTest: false,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending,
+        side: DoubleSide,
+        blending: AdditiveBlending,
         uniforms: {
           uColor: { value: color(C.mist) },
           uAccent: { value: color(accent) },
@@ -380,19 +401,19 @@ export function createArchitecture(tier: Tier): Layer {
           uTime: { value: 0 },
         },
       });
-      const mesh = new THREE.Mesh(panelGeo, material);
+      const mesh = new Mesh(panelGeo, material);
       mesh.position.set(x, y, z);
       mesh.rotation.y = ry;
       mesh.renderOrder = z > 0 ? 7 : 2;
       group.add(mesh);
       disposables.push(material);
-      return { mesh, material, home: new THREE.Vector3(x, y, z) };
+      return { mesh, material, home: new Vector3(x, y, z) };
     });
 
   // Database: three stacked discs.
-  const discGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.11, 28, 1);
+  const discGeo = new CylinderGeometry(0.24, 0.24, 0.11, 28, 1);
   disposables.push(discGeo);
-  const dbHome = new THREE.Vector3(-1.2, -0.5, -1.4);
+  const dbHome = new Vector3(-1.2, -0.5, -1.4);
   for (let i = 0; i < 3; i++) {
     const g = glass(discGeo, "#1a1024");
     g.mesh.position.set(dbHome.x, dbHome.y + i * 0.15, dbHome.z);
@@ -404,21 +425,21 @@ export function createArchitecture(tier: Tier): Layer {
   }
 
   // Services around an API gateway, with category colours as small details.
-  const gateway = new THREE.Vector3(1.25, 0.42, -2.2);
-  const gateGeo = new THREE.OctahedronGeometry(0.13, 0);
+  const gateway = new Vector3(1.25, 0.42, -2.2);
+  const gateGeo = new OctahedronGeometry(0.13, 0);
   const gate = edges(gateGeo, C.mist);
   gate.lines.position.copy(gateway);
   group.add(gate.lines);
   fades.push([gate.material, 0.9, 1]);
   disposables.push(gateGeo, gate.material, gate.geometry);
 
-  const boxGeo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+  const boxGeo = new BoxGeometry(0.15, 0.15, 0.15);
   disposables.push(boxGeo);
   const segments: Segment[] = [];
   const mist = color(C.mist).multiplyScalar(0.7);
   const services = C.categories.map((hex, i) => {
     const ang = (i / C.categories.length) * Math.PI * 2 + 0.4;
-    const p = new THREE.Vector3(
+    const p = new Vector3(
       gateway.x + Math.cos(ang) * 0.5,
       gateway.y + Math.sin(ang) * 0.4,
       gateway.z + Math.sin(ang * 2) * 0.35,
@@ -433,15 +454,15 @@ export function createArchitecture(tier: Tier): Layer {
   });
 
   // Cloud: a wireframe cluster, linked back to the gateway and the database.
-  const cloudGeo = new THREE.IcosahedronGeometry(0.34, 1);
+  const cloudGeo = new IcosahedronGeometry(0.34, 1);
   const cloud = edges(cloudGeo, C.purple);
-  const cloudHome = new THREE.Vector3(-1.55, 0.72, -2.6);
+  const cloudHome = new Vector3(-1.55, 0.72, -2.6);
   cloud.lines.position.copy(cloudHome);
   group.add(cloud.lines);
   fades.push([cloud.material, 0.5, 1]);
   disposables.push(cloudGeo, cloud.material, cloud.geometry);
 
-  const dbTop = dbHome.clone().add(new THREE.Vector3(0, 0.36, 0));
+  const dbTop = dbHome.clone().add(new Vector3(0, 0.36, 0));
   segments.push(
     { a: dbTop, b: gateway, color: mist, order: 0.05 },
     { a: cloudHome, b: gateway, color: mist, order: 0.12 },
@@ -497,15 +518,15 @@ export function createArchitecture(tier: Tier): Layer {
 /* ── Lighting for the metallic / glass structures ─────────────────── */
 
 export function createLights(): Layer {
-  const group = new THREE.Group();
-  const ambient = new THREE.AmbientLight(color(C.mist), 0.25);
-  const key = new THREE.DirectionalLight(color(C.mist), 0.5);
+  const group = new Group();
+  const ambient = new AmbientLight(color(C.mist), 0.25);
+  const key = new DirectionalLight(color(C.mist), 0.5);
   key.position.set(1, 2, 3);
-  const rim = new THREE.PointLight(color(C.purple), 0, 14, 1.6);
+  const rim = new PointLight(color(C.purple), 0, 14, 1.6);
   rim.position.set(0, 0.6, -3.2);
-  const side = new THREE.PointLight(color(C.magenta), 0, 12, 1.6);
+  const side = new PointLight(color(C.magenta), 0, 12, 1.6);
   side.position.set(-2.6, 1, -2);
-  const warm = new THREE.PointLight(color(C.orange), 0, 10, 1.6);
+  const warm = new PointLight(color(C.orange), 0, 10, 1.6);
   warm.position.set(2.4, -1.2, -1.5);
   group.add(ambient, key, rim, side, warm);
   return {

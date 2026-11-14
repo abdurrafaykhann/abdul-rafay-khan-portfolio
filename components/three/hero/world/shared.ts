@@ -1,4 +1,16 @@
-import * as THREE from "three";
+import {
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
+  Color,
+  LineSegments,
+  Object3D,
+  Points,
+  ShaderMaterial,
+  Sphere,
+  Vector2,
+  Vector3,
+} from "three";
 import type { Choreography } from "@/lib/hero/choreography";
 
 /** Per-frame input for every layer of the hero world. */
@@ -17,7 +29,7 @@ export type Frame = {
 };
 
 export type Layer = {
-  object: THREE.Object3D;
+  object: Object3D;
   update(f: Frame): void;
   dispose(): void;
 };
@@ -34,7 +46,7 @@ export function seeded(seed: number) {
   };
 }
 
-export const color = (hex: string) => new THREE.Color(hex);
+export const color = (hex: string) => new Color(hex);
 
 /** Gentle organic drift, identical for nodes and the lines joining them. */
 export const WOBBLE_GLSL = /* glsl */ `
@@ -93,9 +105,9 @@ const pulseFragment = /* glsl */ `
 `;
 
 export type Segment = {
-  a: THREE.Vector3;
-  b: THREE.Vector3;
-  color: THREE.Color;
+  a: Vector3;
+  b: Vector3;
+  color: Color;
   /** 0..1: when this line appears during the reveal */
   order: number;
 };
@@ -122,20 +134,20 @@ export function createPulseLines(
     s.color.toArray(col, i * 6);
     s.color.toArray(col, i * 6 + 3);
   });
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  geometry.setAttribute("aT", new THREE.BufferAttribute(t, 1));
-  geometry.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1));
-  geometry.setAttribute("aOrder", new THREE.BufferAttribute(order, 1));
-  geometry.setAttribute("aColor", new THREE.BufferAttribute(col, 3));
-  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-  const material = new THREE.ShaderMaterial({
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new BufferAttribute(pos, 3));
+  geometry.setAttribute("aT", new BufferAttribute(t, 1));
+  geometry.setAttribute("aSeed", new BufferAttribute(seed, 1));
+  geometry.setAttribute("aOrder", new BufferAttribute(order, 1));
+  geometry.setAttribute("aColor", new BufferAttribute(col, 3));
+  geometry.boundingSphere = new Sphere(new Vector3(), 20);
+  const material = new ShaderMaterial({
     vertexShader: pulseVertex,
     fragmentShader: pulseFragment,
     transparent: true,
     depthWrite: false,
     depthTest: false,
-    blending: THREE.AdditiveBlending,
+    blending: AdditiveBlending,
     uniforms: {
       uTime: { value: 0 },
       uReveal: { value: 0 },
@@ -144,7 +156,7 @@ export function createPulseLines(
       uPulseColor: { value: color(opts.pulse) },
     },
   });
-  const lines = new THREE.LineSegments(geometry, material);
+  const lines = new LineSegments(geometry, material);
   lines.frustumCulled = false;
   return { lines, material, geometry };
 }
@@ -196,8 +208,8 @@ const pointFragment = /* glsl */ `
 `;
 
 export type Dot = {
-  p: THREE.Vector3;
-  color: THREE.Color;
+  p: Vector3;
+  color: Color;
   /** world-unit diameter */
   size: number;
   order: number;
@@ -222,30 +234,30 @@ export function createGlowPoints(
     seed[i] = rand();
     order[i] = d.order;
   });
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  geometry.setAttribute("aColor", new THREE.BufferAttribute(col, 3));
-  geometry.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
-  geometry.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1));
-  geometry.setAttribute("aOrder", new THREE.BufferAttribute(order, 1));
-  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-  const material = new THREE.ShaderMaterial({
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new BufferAttribute(pos, 3));
+  geometry.setAttribute("aColor", new BufferAttribute(col, 3));
+  geometry.setAttribute("aSize", new BufferAttribute(size, 1));
+  geometry.setAttribute("aSeed", new BufferAttribute(seed, 1));
+  geometry.setAttribute("aOrder", new BufferAttribute(order, 1));
+  geometry.boundingSphere = new Sphere(new Vector3(), 20);
+  const material = new ShaderMaterial({
     vertexShader: pointVertex,
     fragmentShader: pointFragment,
     transparent: true,
     depthWrite: false,
     depthTest: false,
-    blending: THREE.AdditiveBlending,
+    blending: AdditiveBlending,
     uniforms: {
       uTime: { value: 0 },
       uScale: { value: 1000 },
       uReveal: { value: 1 },
       uAlpha: { value: 1 },
       uWobble: { value: opts.wobble ? 1 : 0 },
-      uPointer: { value: new THREE.Vector2() },
+      uPointer: { value: new Vector2() },
     },
   });
-  const points = new THREE.Points(geometry, material);
+  const points = new Points(geometry, material);
   points.frustumCulled = false;
   return { points, material, geometry };
 }

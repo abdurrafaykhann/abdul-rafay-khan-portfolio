@@ -2,7 +2,13 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import * as THREE from "three";
+import {
+  Group,
+  LinearFilter,
+  NoColorSpace,
+  Texture,
+  TextureLoader,
+} from "three";
 import type { PortraitLayout } from "@/lib/hero/choreography";
 import { CAMERA_Z, FOV, type Tier } from "@/lib/hero/config";
 import { parseParticles, type ParticleData } from "@/lib/hero/intro";
@@ -35,8 +41,8 @@ type Props = {
 
 type Assets = {
   data: ParticleData;
-  photo: THREE.Texture;
-  depth: THREE.Texture;
+  photo: Texture;
+  depth: Texture;
 };
 
 function World({
@@ -50,7 +56,7 @@ function World({
   skipSignal: number;
   onPhase: (phase: Phase) => void;
 }) {
-  const rootRef = useRef<THREE.Group>(null);
+  const rootRef = useRef<Group>(null);
   const reported = useRef<Phase | null>(null);
 
   useEffect(() => world.setLayout(layout), [world, layout]);
@@ -85,13 +91,13 @@ function World({
   return <primitive ref={rootRef} object={world.root} />;
 }
 
-function loadTexture(src: string): Promise<THREE.Texture> {
+function loadTexture(src: string): Promise<Texture> {
   return new Promise((resolve, reject) =>
-    new THREE.TextureLoader().load(
+    new TextureLoader().load(
       src,
       (t) => {
-        t.colorSpace = THREE.NoColorSpace;
-        t.minFilter = THREE.LinearFilter;
+        t.colorSpace = NoColorSpace;
+        t.minFilter = LinearFilter;
         t.generateMipmaps = false;
         resolve(t);
       },
