@@ -7,6 +7,8 @@
  *   .motion – animations are allowed
  */
 export const PLAIN_MODE_KEY = "plain-mode";
+/** set once the "turn the motion on" tip has been shown (or acted on) */
+export const MOTION_TIP_KEY = "motion-tip-seen";
 export const MOTION_PREF_EVENT = "motionprefchange";
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -17,12 +19,41 @@ export function computeMotionEnabled(state: {
   return !state.plain && !state.reduced;
 }
 
-export function readPlainMode(): boolean {
-  try {
-    return window.localStorage.getItem(PLAIN_MODE_KEY) === "1";
-  } catch {
+/**
+ * Phones: a touch screen whose shorter side is under 768 px (a narrow desktop
+ * window is not a phone). Phones start with motion and 3D off, because that
+ * is the lightest experience; the visitor can turn it on.
+ */
+export function isPhone(): boolean {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
     return false;
   }
+  return (
+    window.matchMedia("(pointer: coarse)").matches &&
+    Math.min(window.screen.width, window.screen.height) < 768
+  );
+}
+
+// remembered for this page when storage is unavailable (private mode)
+let sessionChoice: boolean | null = null;
+
+/** What the visitor chose: true = plain, false = motion on, null = never chose. */
+export function readStoredPlain(): boolean | null {
+  if (sessionChoice !== null) return sessionChoice;
+  try {
+    const v = window.localStorage.getItem(PLAIN_MODE_KEY);
+    return v === "1" ? true : v === "0" ? false : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Plain mode: the visitor's choice, otherwise on for phones and off elsewhere. */
+export function readPlainMode(): boolean {
+  return readStoredPlain() ?? isPhone();
 }
 
 export function readReducedMotion(): boolean {
@@ -46,10 +77,12 @@ export function applyToDocument(): void {
 }
 
 export function setPlainMode(on: boolean): void {
+  sessionChoice = null;
   try {
     window.localStorage.setItem(PLAIN_MODE_KEY, on ? "1" : "0");
   } catch {
     /* storage unavailable: the choice lasts for this page only */
+    sessionChoice = on;
     document.documentElement.classList.toggle("plain", on);
   }
   applyToDocument();
@@ -80,8 +113,8 @@ export function subscribeMotionPrefs(onChange: () => void): () => void {
  * sets the html classes, and — as a failsafe — if the app has not hydrated
  * after 5 s, drops `.motion` so content hidden for entrance animations shows.
  */
-export const MOTION_INIT_SCRIPT = `(function(){try{var d=document.documentElement;var p=false;try{p=localStorage.getItem(${JSON.stringify(
+export const MOTION_INIT_SCRIPT = `(function(){try{var d=document.documentElement;var s=null;try{s=localStorage.getItem(${JSON.stringify(
   PLAIN_MODE_KEY,
-)})==="1"}catch(e){}var r=window.matchMedia&&matchMedia(${JSON.stringify(
+)})}catch(e){}var ph=false;try{ph=matchMedia("(pointer: coarse)").matches&&Math.min(screen.width,screen.height)<768}catch(e){}var p=s==="1"||(s!=="0"&&ph);var r=window.matchMedia&&matchMedia(${JSON.stringify(
   REDUCED_QUERY,
 )}).matches;if(p)d.classList.add("plain");if(!p&&!r)d.classList.add("motion");setTimeout(function(){if(!window.__motionReady)d.classList.remove("motion")},5000)}catch(e){}})();`;

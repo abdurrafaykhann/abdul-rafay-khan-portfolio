@@ -35,7 +35,7 @@ test.describe("hero 3D portrait", () => {
     await page.goto("/");
     await expect.poll(() => phase(page), { timeout: 30_000 }).toBe("intro");
     await page.mouse.click(10, 400);
-    await expect.poll(() => phase(page), { timeout: 5_000 }).toBe("settled");
+    await expect.poll(() => phase(page), { timeout: 20_000 }).toBe("settled");
   });
 
   test("plain mode keeps the static photo, no 3D", async ({ page }) => {

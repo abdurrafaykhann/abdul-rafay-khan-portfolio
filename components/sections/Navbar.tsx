@@ -1,3 +1,4 @@
+import { MotionTip } from "@/components/ui/MotionTip";
 import { PlainModeToggle } from "@/components/ui/PlainModeToggle";
 import type { NavLink } from "@/lib/data/select";
 import { site } from "@/lib/site";
@@ -20,7 +21,10 @@ export function Navbar({ links }: { links: NavLink[] }) {
           {link.label}
         </a>
       ))}
-      <PlainModeToggle />
+      <span className="relative inline-flex">
+        <PlainModeToggle />
+        <MotionTip />
+      </span>
     </nav>
   );
 }
