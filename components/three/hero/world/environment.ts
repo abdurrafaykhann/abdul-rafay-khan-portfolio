@@ -66,7 +66,8 @@ function glowPlane(hex: string, shaft = false) {
 
 export function createAtmosphere(): Layer {
   const group = new THREE.Group();
-  const purple = glowPlane(C.purple);
+  // purple pulled a little towards magenta so the glow never reads blue
+  const purple = glowPlane("#8A21AC");
   purple.mesh.position.set(0.1, 0.35, -4.6);
   purple.mesh.scale.set(8.5, 6.2, 1);
   const magenta = glowPlane(C.magenta);
@@ -90,7 +91,7 @@ export function createAtmosphere(): Layer {
     object: group,
     update(f) {
       const a = f.env * f.c.atmosphere;
-      purple.material.uniforms.uAlpha.value = a * 0.34;
+      purple.material.uniforms.uAlpha.value = a * 0.27;
       magenta.material.uniforms.uAlpha.value = a * (0.1 + 0.12 * f.c.neural);
       orange.material.uniforms.uAlpha.value =
         f.env * (0.04 + 0.1 * f.c.stack + 0.14 * f.c.final);
@@ -346,18 +347,19 @@ export function createArchitecture(tier: Tier): Layer {
       e.lines.position.copy(g.mesh.position);
       e.lines.scale.copy(g.mesh.scale);
       group.add(g.mesh, e.lines);
-      fades.push([g.material, 0.5, 0], [e.material, 0.22, 0]);
+      // kept faint: they sit behind the heading and must not darken it
+      fades.push([g.material, 0.14, 0], [e.material, 0.1, 0]);
       disposables.push(g.material, e.material, e.geometry);
     }
   }
 
   // Interface panels (frontend, dashboard, API), off to the sides.
-  const panelGeo = new THREE.PlaneGeometry(1, 0.66);
+  const panelGeo = new THREE.PlaneGeometry(0.82, 0.54);
   disposables.push(panelGeo);
   const panelSpots: [number, number, number, number, number, string][] = [
-    [-1.2, 0.2, 0.3, 0.5, 0, C.purple],
-    [1.3, -0.12, 0.1, -0.55, 1, C.magenta],
-    [1.95, 0.6, -1.3, -0.4, 2, C.orange],
+    [-1.02, 0.28, -0.9, 0.45, 0, C.purple],
+    [1.08, -0.22, -0.7, -0.5, 1, C.magenta],
+    [1.7, 0.78, -2.1, -0.35, 2, C.orange],
   ];
   const panels = panelSpots
     .slice(0, tier.panels)
@@ -390,7 +392,7 @@ export function createArchitecture(tier: Tier): Layer {
   // Database: three stacked discs.
   const discGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.11, 28, 1);
   disposables.push(discGeo);
-  const dbHome = new THREE.Vector3(-1.75, -0.5, -0.9);
+  const dbHome = new THREE.Vector3(-1.2, -0.5, -1.4);
   for (let i = 0; i < 3; i++) {
     const g = glass(discGeo, "#1a1024");
     g.mesh.position.set(dbHome.x, dbHome.y + i * 0.15, dbHome.z);
@@ -402,7 +404,7 @@ export function createArchitecture(tier: Tier): Layer {
   }
 
   // Services around an API gateway, with category colours as small details.
-  const gateway = new THREE.Vector3(1.55, 0.3, -1.7);
+  const gateway = new THREE.Vector3(1.25, 0.42, -2.2);
   const gateGeo = new THREE.OctahedronGeometry(0.13, 0);
   const gate = edges(gateGeo, C.mist);
   gate.lines.position.copy(gateway);
@@ -417,14 +419,14 @@ export function createArchitecture(tier: Tier): Layer {
   const services = C.categories.map((hex, i) => {
     const ang = (i / C.categories.length) * Math.PI * 2 + 0.4;
     const p = new THREE.Vector3(
-      gateway.x + Math.cos(ang) * 0.62,
-      gateway.y + Math.sin(ang) * 0.48,
+      gateway.x + Math.cos(ang) * 0.5,
+      gateway.y + Math.sin(ang) * 0.4,
       gateway.z + Math.sin(ang * 2) * 0.35,
     );
     const e = edges(boxGeo, hex);
     e.lines.position.copy(p);
     group.add(e.lines);
-    fades.push([e.material, 0.75, 1]);
+    fades.push([e.material, 0.45, 1]);
     disposables.push(e.material, e.geometry);
     segments.push({ a: gateway, b: p, color: mist, order: 0.2 + i * 0.07 });
     return e.lines;
@@ -433,7 +435,7 @@ export function createArchitecture(tier: Tier): Layer {
   // Cloud: a wireframe cluster, linked back to the gateway and the database.
   const cloudGeo = new THREE.IcosahedronGeometry(0.34, 1);
   const cloud = edges(cloudGeo, C.purple);
-  const cloudHome = new THREE.Vector3(-1.95, 0.8, -2.3);
+  const cloudHome = new THREE.Vector3(-1.55, 0.72, -2.6);
   cloud.lines.position.copy(cloudHome);
   group.add(cloud.lines);
   fades.push([cloud.material, 0.5, 1]);
