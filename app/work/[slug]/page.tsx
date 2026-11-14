@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { PlainModeToggle } from "@/components/ui/PlainModeToggle";
 import { CaseStudy } from "@/components/work/CaseStudy";
 import { getContent, getPublishedSlugs } from "@/lib/data/content";
@@ -10,8 +9,11 @@ import { creativeWorkJsonLd, jsonLd, projectDescription } from "@/lib/seo";
 import { site } from "@/lib/site";
 import { siteUrl } from "@/lib/site-url";
 
-/** Pages for the published projects are built ahead of time; new ones are
- *  generated the first time they are visited and cached. */
+// Published projects are built ahead of time; a project published later is
+// generated the first time it is visited (that first request waits for the
+// page, so an unknown address can answer with a real 404 status).
+export const instant = false;
+
 export async function generateStaticParams() {
   const slugs = await getPublishedSlugs();
   // Next.js needs at least one entry; this placeholder renders a 404.
@@ -44,29 +46,16 @@ export async function generateMetadata({
   };
 }
 
-async function Project({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const { content } = await getContent();
-  const project = findProject(content, slug);
-  if (!project) notFound();
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: jsonLd(creativeWorkJsonLd(project)),
-        }}
-      />
-      <CaseStudy project={project} content={content} />
-    </>
-  );
-}
-
-export default function WorkPage({
+export default async function WorkPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
+  const { content } = await getContent();
+  const project = findProject(content, slug);
+  if (!project) notFound();
+
   return (
     <div className="bg-ink min-h-svh">
       <header className="text-mist fixed inset-x-0 top-0 z-30 flex items-center justify-between px-6 pt-6 text-sm font-medium tracking-wider uppercase md:px-10 md:pt-8 md:text-lg">
@@ -82,9 +71,13 @@ export default function WorkPage({
         <PlainModeToggle />
       </header>
       <main id="main" style={{ overflowX: "clip" }}>
-        <Suspense fallback={<div className="min-h-svh" />}>
-          <Project params={params} />
-        </Suspense>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonLd(creativeWorkJsonLd(project)),
+          }}
+        />
+        <CaseStudy project={project} content={content} />
       </main>
     </div>
   );

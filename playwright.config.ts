@@ -16,6 +16,8 @@ export default defineConfig({
   use: {
     baseURL: remote ?? `http://localhost:${PORT}`,
     trace: "on-first-retry",
+    // saved browser state, e.g. for a login-protected Vercel preview
+    storageState: process.env.E2E_STORAGE || undefined,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: remote
