@@ -241,3 +241,68 @@ export async function adminInsights(): Promise<Insights> {
     (projects.data ?? []) as { id: string; title: string }[],
   );
 }
+
+export type AskLogEntry = {
+  id: string;
+  question: string;
+  answered: boolean;
+  model: string | null;
+  createdAt: string;
+};
+
+export type AiActivity = {
+  asked: number;
+  unanswered: number;
+  recentQuestions: AskLogEntry[];
+  matched: number;
+  recentMatches: {
+    id: string;
+    jobTitle: string | null;
+    company: string | null;
+    createdAt: string;
+  }[];
+};
+
+/** Questions asked of the AI and job descriptions matched (titles only). */
+export async function adminAiActivity(): Promise<AiActivity> {
+  const { supabase } = await requireAdmin();
+  const [asks, matches, askCount, unansweredCount, matchCount] =
+    await Promise.all([
+      supabase
+        .from("ask_logs")
+        .select("id, question, answered, model, created_at")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      supabase
+        .from("matches")
+        .select("id, job_title, company, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase.from("ask_logs").select("id", { count: "exact", head: true }),
+      supabase
+        .from("ask_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("answered", false),
+      supabase.from("matches").select("id", { count: "exact", head: true }),
+    ]);
+  for (const r of [asks, matches, askCount, unansweredCount, matchCount])
+    if (r.error) throw new Error(r.error.message);
+  return {
+    asked: askCount.count ?? 0,
+    unanswered: unansweredCount.count ?? 0,
+    recentQuestions: (asks.data ?? []).map((r) => ({
+      id: r.id,
+      question: r.question,
+      answered: r.answered,
+      model: r.model,
+      createdAt: r.created_at,
+    })),
+    matched: matchCount.count ?? 0,
+    recentMatches: (matches.data ?? []).map((r) => ({
+      id: r.id,
+      jobTitle: r.job_title,
+      company: r.company,
+      createdAt: r.created_at,
+    })),
+  };
+}

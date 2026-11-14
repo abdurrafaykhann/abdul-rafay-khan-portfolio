@@ -1,4 +1,4 @@
-import { adminInsights } from "@/lib/admin/data";
+import { adminAiActivity, adminInsights } from "@/lib/admin/data";
 
 const LABELS: Record<string, string> = {
   "try-it": "Try it",
@@ -22,7 +22,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 export default async function InsightsPage() {
-  const i = await adminInsights();
+  const [i, ai] = await Promise.all([adminInsights(), adminAiActivity()]);
   const empty = i.totalViews === 0 && i.totalClicks === 0;
   return (
     <div className="flex flex-col gap-8">
@@ -43,6 +43,63 @@ export default async function InsightsPage() {
         <Stat label="Views, last 30 days" value={i.viewsLast30Days} />
         <Stat label="Link clicks" value={i.totalClicks} />
       </div>
+
+      <section aria-label="AI activity" className="flex flex-col gap-4">
+        <h2 className="text-sm font-medium tracking-widest uppercase opacity-70">
+          AI activity
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Questions asked" value={ai.asked} />
+          <Stat label="Not answered" value={ai.unanswered} />
+          <Stat label="Job descriptions matched" value={ai.matched} />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-xs tracking-widest uppercase opacity-60">
+              Recent questions
+            </h3>
+            {ai.recentQuestions.length === 0 ? (
+              <p className="text-sm opacity-60">None yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {ai.recentQuestions.map((q) => (
+                  <li
+                    key={q.id}
+                    className="rounded-2xl border border-[#D7E2EA]/15 px-4 py-2.5 text-sm"
+                  >
+                    {q.question}
+                    {!q.answered && (
+                      <span className="ml-2 rounded-full bg-amber-400/20 px-2 py-0.5 text-[0.65rem] tracking-wider uppercase">
+                        not answered
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h3 className="mb-2 text-xs tracking-widest uppercase opacity-60">
+              Recent matches
+            </h3>
+            {ai.recentMatches.length === 0 ? (
+              <p className="text-sm opacity-60">None yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {ai.recentMatches.map((m) => (
+                  <li
+                    key={m.id}
+                    className="rounded-2xl border border-[#D7E2EA]/15 px-4 py-2.5 text-sm"
+                  >
+                    {[m.jobTitle, m.company].filter(Boolean).join(" · ") ||
+                      "Untitled role"}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
 
       {empty ? (
         <p className="rounded-2xl border border-[#D7E2EA]/25 px-4 py-3 text-sm">
